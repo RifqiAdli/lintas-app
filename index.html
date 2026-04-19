@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LINTAS - Transportasi Online</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f3f4f6;
+            -webkit-tap-highlight-color: transparent;
+            margin: 0; padding: 0;
+        }
+
+        .app-container {
+            max-width: 414px;
+            margin: 0 auto;
+            background-color: #fff;
+            height: 100vh;
+            height: 100dvh;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 30px rgba(0,0,0,0.15);
+        }
+
+        .screen {
+            display: none;
+            height: 100%;
+            width: 100%;
+            overflow-y: auto;
+            padding-bottom: 80px;
+            background-color: #fff;
+        }
+
+        .screen.active { display: block; animation: fadeIn 0.25s ease; }
+
+        #map-screen.active  { display: flex !important; flex-direction: column; overflow: hidden !important; padding-bottom: 0 !important; }
+        #sim-screen.active  { display: block; overflow: hidden !important; padding-bottom: 0 !important; }
+        #promo-screen.active { display: flex !important; flex-direction: column; padding-bottom: 0 !important; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .gradient-peach          { background: linear-gradient(180deg, #fce5ce 0%, #f2a681 100%); }
+        .gradient-peach-h        { background: linear-gradient(90deg,  #fce5ce 0%, #f2a681 100%); }
+
+        /* Leaflet map containers */
+        #map-leaflet        { width: 100%; height: 100%; z-index: 1; }
+        #sim-leaflet-map    { width: 100%; height: 56%; z-index: 1; }
+        #explore-mini-map   { width: 100%; height: 100%; z-index: 1; }
+
+        /* Override Leaflet attribution */
+        .leaflet-control-attribution { font-size: 8px !important; }
+
+        /* Loader */
+        .loader { border:3px solid #f3f3f3; border-radius:50%; border-top:3px solid #f28c68; width:22px; height:22px; animation:spin 0.9s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Pulse dots on explore map */
+        @keyframes pdot { 0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.7} 50%{transform:translate(-50%,-50%) scale(1.45);opacity:1} }
+        .pulse-dot { animation: pdot 2s ease-in-out infinite; }
+        .pulse-dot:nth-child(2){animation-delay:.4s}
+        .pulse-dot:nth-child(3){animation-delay:.8s}
+        .pulse-dot:nth-child(4){animation-delay:1.2s}
+        .pulse-dot:nth-child(5){animation-delay:1.6s}
+
+        /* Route line on sim map */
+        .route-line { stroke-dasharray: 8 5; animation: dash 1.2s linear infinite; }
+        @keyframes dash { to { stroke-dashoffset: -26; } }
+    </style>
+</head>
+<body>
+<div class="app-container relative">
+
+    <!-- ===== SCREEN 1: HOME ===== -->
+    <div id="home-screen" class="screen active no-scrollbar">
+        <div class="relative bg-gradient-to-b from-[#f8ab81] via-[#fde8d4] to-white pt-10 px-4 pb-4">
+            <div class="bg-white/80 backdrop-blur-md rounded-[20px] p-5 shadow-sm relative overflow-hidden border border-white/50">
+                <div class="absolute -right-3 -top-3 w-36 h-36 rounded-full bg-gradient-to-br from-[#f28c68]/20 to-transparent"></div>
+                <div class="relative z-10">
+                    <h2 class="text-xl font-bold leading-tight">Selamat Datang,</h2>
+                    <h2 class="text-xl font-bold mb-3">Orang Baik!</h2>
+                    <div class="w-24 h-0.5 bg-black mb-3"></div>
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <p class="text-[15px] font-bold">Rp. 600.000</p>
+                            <p class="text-[11px] text-gray-600">30.000 Poin</p>
+                        </div>
+                        <div class="flex gap-4">
+                            <div class="text-center cursor-pointer">
+                                <div class="w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-sm mb-1 text-xs"><i class="fa-solid fa-plus"></i></div>
+                                <p class="text-[9px] font-semibold">Top-Up</p>
+                            </div>
+                            <div class="text-center cursor-pointer">
+                                <div class="w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-sm mb-1 text-xs"><i class="fa-solid fa-dollar-sign"></i></div>
+                                <p class="text-[9px] font-semibold">Bayar</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="px-5">
+            <div class="relative mb-5">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                <input type="text" placeholder="Search" class="w-full bg-white border border-gray-200 rounded-[15px] py-3 pl-10 pr-10 text-sm font-medium focus:outline-none shadow-sm">
+                <i class="fa-solid fa-expand absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+            </div>
+
+            <h3 class="font-bold text-[15px] mb-4">Layanan Aplikasi</h3>
+            <div class="grid grid-cols-4 gap-y-4 gap-x-2 text-center mb-6">
+                <div class="cursor-pointer" onclick="goToMap('Becak')">
+                    <div class="w-[70px] h-[70px] mx-auto bg-[#f2a681] rounded-2xl mb-1 shadow-sm flex items-center justify-center text-white text-2xl"><i class="fa-solid fa-bicycle"></i></div>
+                    <p class="text-[11px] font-bold">Becak</p>
+                </div>
+                <div class="cursor-pointer" onclick="goToMap('Andong')">
+                    <div class="w-[70px] h-[70px] mx-auto bg-[#f2a681] rounded-2xl mb-1 shadow-sm flex items-center justify-center text-white text-2xl"><i class="fa-solid fa-horse"></i></div>
+                    <p class="text-[11px] font-bold">Andong</p>
+                </div>
+                <div><div class="w-[70px] h-[70px] mx-auto bg-[#f2a681]/25 rounded-2xl mb-1"></div><div class="h-2 w-10 mx-auto bg-gray-200 rounded-full mt-1"></div></div>
+                <div><div class="w-[70px] h-[70px] mx-auto bg-[#f2a681]/25 rounded-2xl mb-1"></div><div class="h-2 w-10 mx-auto bg-gray-200 rounded-full mt-1"></div></div>
+                <div><div class="w-[70px] h-[70px] mx-auto bg-[#f2a681]/25 rounded-2xl mb-1"></div><div class="h-2 w-10 mx-auto bg-gray-200 rounded-full mt-1"></div></div>
+                <div><div class="w-[70px] h-[70px] mx-auto bg-[#f2a681]/25 rounded-2xl mb-1"></div><div class="h-2 w-10 mx-auto bg-gray-200 rounded-full mt-1"></div></div>
+                <div><div class="w-[70px] h-[70px] mx-auto bg-[#f2a681]/25 rounded-2xl mb-1"></div><div class="h-2 w-10 mx-auto bg-gray-200 rounded-full mt-1"></div></div>
+                <div><div class="w-[70px] h-[70px] mx-auto bg-[#f2a681]/25 rounded-2xl mb-1"></div><div class="h-2 w-10 mx-auto bg-gray-200 rounded-full mt-1"></div></div>
+            </div>
+
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="font-bold text-[15px]">Promo</h3>
+                <i class="fa-solid fa-chevron-right text-gray-400 text-xs"></i>
+            </div>
+            <div class="w-full h-32 rounded-2xl overflow-hidden cursor-pointer shadow-sm mb-6" onclick="navTo('promo-screen')">
+                <div class="w-full h-full bg-gradient-to-r from-[#f28c68] to-[#fbbf8e] flex items-center relative overflow-hidden">
+                    <div class="absolute right-3 top-1/2 -translate-y-1/2 opacity-15 text-[80px]"><i class="fa-solid fa-bicycle text-white"></i></div>
+                    <div class="pl-5 relative z-10">
+                        <div class="bg-white/20 text-white text-[9px] font-bold px-2 py-0.5 rounded-full inline-block mb-1">LIMITED</div>
+                        <p class="text-white font-bold text-lg leading-tight">Becak Premium</p>
+                        <p class="text-white/80 text-[11px] mt-1">Diskon 20% perjalanan pertama Anda!</p>
+                        <div class="mt-2 bg-white text-[#f28c68] text-[10px] font-bold px-3 py-1 rounded-full inline-block shadow-sm">Klaim Sekarang →</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="font-bold text-[15px]">Pemberitahuan</h3>
+                <i class="fa-solid fa-chevron-right text-gray-400 text-xs"></i>
+            </div>
+            <div class="flex flex-col gap-2 mb-4">
+                <div class="bg-[#fafafa] rounded-2xl p-4 border border-gray-100 shadow-sm flex items-start gap-3">
+                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-check text-green-500 text-sm"></i></div>
+                    <div>
+                        <p class="text-[12px] font-bold">Pesanan Berhasil!</p>
+                        <p class="text-[10px] text-gray-500 mt-0.5">Becak Motor Anda telah selesai. Rating driver sekarang.</p>
+                        <p class="text-[9px] text-gray-400 mt-1">10 menit lalu</p>
+                    </div>
+                </div>
+                <div class="bg-[#fafafa] rounded-2xl p-4 border border-gray-100 shadow-sm flex items-start gap-3">
+                    <div class="w-8 h-8 bg-[#fde8d4] rounded-full flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-tag text-[#f28c68] text-sm"></i></div>
+                    <div>
+                        <p class="text-[12px] font-bold">Promo Baru Tersedia</p>
+                        <p class="text-[10px] text-gray-500 mt-0.5">Gunakan kode LINTAS20 untuk diskon spesial!</p>
+                        <p class="text-[9px] text-gray-400 mt-1">1 jam lalu</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== SCREEN 2: MAP / PILIH KENDARAAN ===== -->
+    <div id="map-screen" class="screen no-scrollbar">
+        <!-- Header bar -->
+        <div class="px-5 pt-12 pb-4 bg-white z-[600] shadow-sm flex items-center gap-4 flex-shrink-0" style="position:relative;z-index:600;">
+            <i class="fa-solid fa-arrow-left text-xl cursor-pointer" onclick="navTo('home-screen')"></i>
+            <div class="flex-1 bg-white border border-gray-200 shadow-sm rounded-full py-2.5 px-4 flex items-center gap-2">
+                <i class="fa-solid fa-location-dot text-[#f28c68]"></i>
+                <input type="text" placeholder="Mau Pergi Kemana?" class="w-full text-sm font-medium outline-none cursor-pointer" readonly onclick="alert('Ketik tujuan Anda...')">
+            </div>
+        </div>
+
+        <!-- Leaflet Map (flex:1 fills remaining height) -->
+        <div class="flex-1 relative" style="min-height:0; overflow:hidden;">
+            <div id="map-leaflet" style="border-radius:0 0 30px 30px; overflow:hidden;"></div>
+
+            <!-- Bottom Sheet (z-index above leaflet = 500+) -->
+            <div class="absolute bottom-14 left-4 right-4 gradient-peach rounded-[24px] p-6 shadow-xl" style="z-index:500; padding-top:56px;">
+                <!-- Vehicle Visual Card -->
+                <div class="absolute -top-[54px] left-3" style="z-index:510;">
+                    <!-- Becak Visual -->
+                    <div id="vv-becak" class="w-28 h-24 bg-white rounded-[20px] flex flex-col items-center justify-center shadow-xl border-2 border-[#f2a681]">
+                        <i class="fa-solid fa-bicycle text-[#f28c68] text-4xl mb-1"></i>
+                        <span class="text-[9px] font-bold text-[#f28c68] tracking-widest">BECAK</span>
+                    </div>
+                    <!-- Andong Visual -->
+                    <div id="vv-andong" class="w-28 h-24 bg-white rounded-[20px] flex-col items-center justify-center shadow-xl border-2 border-[#f2a681]" style="display:none;">
+                        <i class="fa-solid fa-horse text-[#f28c68] text-4xl mb-1"></i>
+                        <span class="text-[9px] font-bold text-[#f28c68] tracking-widest">ANDONG</span>
+                    </div>
+                </div>
+
+                <h2 id="map-vehicle-title" class="text-[22px] font-bold">Becak</h2>
+                <div class="flex items-center gap-2 mt-1">
+                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    <p class="text-[11px] font-semibold text-gray-700">3 <span id="map-vehicle-type">Becak</span> terdekat di sekitar Anda</p>
+                </div>
+                <p class="text-[13px] font-bold mt-1">⏱ 2–5 Menit dari posisi Anda</p>
+                <button onclick="goToDetail()" class="w-full mt-5 py-3.5 border-2 border-black rounded-full font-bold text-sm hover:bg-black hover:text-white transition-colors">LANJUTKAN</button>
+            </div>
+
+            <!-- Toggle Buttons -->
+            <div class="absolute bottom-4 left-4 right-4 bg-white rounded-full p-1.5 shadow-lg flex" style="z-index:500;">
+                <button id="toggle-becak" onclick="updateMapVehicle('Becak')" class="flex-1 py-3 rounded-full font-bold text-[12px] gradient-peach-h transition-all shadow-sm">🚲 BECAK</button>
+                <button id="toggle-andong" onclick="updateMapVehicle('Andong')" class="flex-1 py-3 rounded-full font-bold text-[12px] text-gray-400 bg-transparent transition-all">🐴 ANDONG</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== SCREEN 3: ORDER DETAIL ===== -->
+    <div id="detail-screen" class="screen px-4 pt-12 no-scrollbar">
+        <div class="flex justify-between items-center mb-6">
+            <i class="fa-solid fa-arrow-left text-xl cursor-pointer" onclick="navTo('map-screen')"></i>
+            <i class="fa-solid fa-bars text-xl cursor-pointer"></i>
+        </div>
+
+        <div class="flex justify-center gap-6 mb-6 border-b border-gray-200 pb-2">
+            <div class="font-bold text-[15px] border-b-2 border-black pb-2 flex items-center gap-2">
+                <i class="fa-solid fa-circle-info text-[#f28c68]"></i> Information
+            </div>
+            <div class="font-bold text-[15px] text-gray-400 pb-2 cursor-pointer">Notification</div>
+        </div>
+
+        <div class="bg-[#fafafa] rounded-[24px] p-5 mb-4 relative shadow-sm border border-gray-100">
+            <p id="detail-category" class="text-[10px] tracking-[0.2em] text-gray-400 font-bold mb-4 uppercase">BECAK TERDEKAT</p>
+            <h2 id="detail-main-name" class="text-2xl font-bold mb-1">Becak Sepeda</h2>
+            <p class="text-[11px] text-gray-500">Rating: ⭐ 4.9 · 128 perjalanan selesai</p>
+            <button class="absolute right-5 bottom-5 w-10 h-10 border-2 border-black rounded-full flex items-center justify-center hover:bg-black hover:text-white transition" onclick="startSimulation()">
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="bg-[#fafafa] rounded-[24px] p-4 shadow-sm border border-gray-100">
+                <div class="mb-3">
+                    <p class="text-[11px] font-bold flex items-center gap-2 text-[#f28c68]"><i class="fa-solid fa-circle-dot"></i> Titik Jemput</p>
+                    <p class="text-[9px] text-gray-500 mt-1 leading-relaxed">Jl. Hj Simbolon No 45, Komplek Harmoni...</p>
+                </div>
+                <div class="mb-3">
+                    <p class="text-[11px] font-bold flex items-center gap-2"><i class="fa-solid fa-location-dot text-red-500"></i> Titik Tujuan</p>
+                    <p class="text-[9px] text-gray-500 mt-1 leading-relaxed">Jl. Pahlawan No 7, Kec. Karang Anyar...</p>
+                </div>
+                <p class="text-[10px] font-bold text-center text-[#f28c68] cursor-pointer">Edit lokasi <i class="fa-regular fa-pen-to-square ml-1"></i></p>
+            </div>
+            <div class="bg-gray-100 rounded-[24px] overflow-hidden relative shadow-sm">
+                <div id="detail-mini-map" style="height:100%; min-height:140px; border-radius:24px; overflow:hidden;"></div>
+                <div class="absolute bottom-3 left-0 right-0 text-center">
+                    <span class="text-[10px] font-bold bg-white/90 px-3 py-1.5 rounded-full shadow-sm">Lihat Rute</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="gradient-peach rounded-[24px] p-5 shadow-sm mb-4">
+            <div class="flex justify-between items-center mb-4">
+                <p id="detail-options-title" class="text-[11px] text-gray-700 font-semibold">Pilihan Becak lain yang tersedia</p>
+                <i class="fa-solid fa-ellipsis text-gray-600"></i>
+            </div>
+            <div class="flex justify-between items-center border-b border-black/10 pb-3 mb-3 cursor-pointer" onclick="startSimulation()">
+                <div>
+                    <h3 id="opt1-name" class="font-bold text-[17px]">Becak Sepeda</h3>
+                    <p class="text-[10px] mt-1 text-gray-700">
+                        <i class="fa-regular fa-paper-plane mr-1"></i> &gt;3km &nbsp;
+                        <i class="fa-solid fa-coins mr-1"></i> Rp. <span id="opt1-price">3.000</span>
+                        &nbsp; <span class="text-green-600 font-bold">⭐ 4.9</span>
+                    </p>
+                </div>
+                <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm"><i class="fa-solid fa-arrow-right text-sm"></i></div>
+            </div>
+            <div class="flex justify-between items-center cursor-pointer" onclick="startSimulation()">
+                <div>
+                    <h3 id="opt2-name" class="font-bold text-[17px]">Becak Motor</h3>
+                    <p class="text-[10px] mt-1 text-gray-700">
+                        <i class="fa-regular fa-paper-plane mr-1"></i> &gt;4km &nbsp;
+                        <i class="fa-solid fa-coins mr-1"></i> Rp. <span id="opt2-price">5.000</span>
+                        &nbsp; <span class="text-green-600 font-bold">⭐ 4.7</span>
+                    </p>
+                </div>
+                <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm"><i class="fa-solid fa-arrow-right text-sm"></i></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== SCREEN 4: SIMULATION (Leaflet OSM) ===== -->
+    <div id="sim-screen" class="screen no-scrollbar" style="position:relative;">
+        <!-- Close -->
+        <div class="absolute top-12 left-5 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md cursor-pointer" style="z-index:1000;" onclick="cancelSimulation()">
+            <i class="fa-solid fa-xmark text-lg"></i>
+        </div>
+        <!-- Status Badge -->
+        <div id="sim-status-badge" class="absolute top-12 right-5 bg-white px-4 py-2 rounded-full shadow-md border border-[#f28c68] text-[#f28c68] text-[11px] font-bold flex items-center gap-2" style="z-index:1000;">
+            <div class="loader"></div>
+            <span id="sim-status-text">Mencari Driver...</span>
+        </div>
+
+        <!-- Leaflet Map — 56% height -->
+        <div id="sim-leaflet-map"></div>
+
+        <!-- Bottom Sheet — 44% height -->
+        <div class="absolute bottom-0 left-0 right-0 bg-white rounded-t-[28px] p-5 pb-24 shadow-[0_-8px_24px_rgba(0,0,0,0.12)]" style="z-index:900; height:44%;">
+            <div class="w-12 h-1 bg-gray-200 rounded-full mx-auto mb-3"></div>
+
+            <!-- Progress Bar -->
+            <div class="w-full bg-gray-100 rounded-full h-1.5 mb-3">
+                <div id="sim-progress-bar" class="bg-[#f28c68] h-1.5 rounded-full transition-all duration-[3000ms]" style="width:0%"></div>
+            </div>
+
+            <h3 id="sim-main-title" class="font-bold text-lg mb-0.5">Mencari driver terdekat...</h3>
+            <p id="sim-eta" class="text-[12px] text-gray-500 font-semibold mb-3">Mohon tunggu sebentar</p>
+
+            <div class="flex items-center gap-4 bg-[#fafafa] border border-gray-100 p-3 rounded-[18px]">
+                <div class="w-[46px] h-[46px] rounded-full bg-[#fde8d4] border-2 border-[#f28c68] flex items-center justify-center flex-shrink-0">
+                    <i class="fa-solid fa-user text-[#f28c68] text-lg"></i>
+                </div>
+                <div class="flex-1">
+                    <p class="font-bold text-[14px]">Mr. Handsome Joe</p>
+                    <p id="sim-vehicle-info" class="text-[10px] text-gray-500 font-semibold mt-0.5">Becak Sepeda · AB 1234 CD</p>
+                    <div class="flex items-center gap-1 mt-0.5">
+                        <span class="text-yellow-400 text-[10px]">★★★★★</span>
+                        <span class="text-[9px] text-gray-400">4.9 (128 trip)</span>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <div class="w-9 h-9 bg-green-500 rounded-full flex items-center justify-center text-white shadow-sm cursor-pointer">
+                        <i class="fa-solid fa-phone text-sm"></i>
+                    </div>
+                    <div class="w-9 h-9 bg-blue-500 rounded-full flex items-center justify-center text-white shadow-sm cursor-pointer">
+                        <i class="fa-solid fa-comment text-sm"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Success Overlay -->
+        <div id="sim-success-overlay" class="absolute inset-0 bg-black/65 flex items-center justify-center flex-col text-white opacity-0 pointer-events-none transition-opacity duration-500" style="z-index:1100;">
+            <div class="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mb-4 text-4xl shadow-xl">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <h2 class="text-2xl font-bold">Pesanan Selesai!</h2>
+            <p class="text-sm mt-2 opacity-80">Terima kasih telah menggunakan LINTAS</p>
+            <div class="flex gap-2 mt-4">
+                <span class="text-yellow-400 text-xl">★★★★★</span>
+            </div>
+            <p class="text-xs opacity-60 mt-1">Nilai pengalaman Anda</p>
+        </div>
+    </div>
+
+    <!-- ===== SCREEN 5: HISTORY ===== -->
+    <div id="history-screen" class="screen px-5 pt-12 no-scrollbar bg-[#fafafa]">
+        <div class="flex items-center gap-4 mb-6">
+            <div class="w-12 h-12 bg-white rounded-full shadow-sm border border-gray-100 flex items-center justify-center flex-shrink-0">
+                <i class="fa-solid fa-user text-gray-400 text-lg"></i>
+            </div>
+            <div>
+                <h1 class="text-[20px] font-bold">Aktivitas Saya</h1>
+                <p class="text-[11px] text-gray-500">Riwayat perjalanan Anda</p>
+            </div>
+        </div>
+
+        <div class="flex gap-2 mb-5 overflow-x-auto no-scrollbar pb-1">
+            <button class="bg-[#f2a681] text-black font-bold text-[12px] px-5 py-2 rounded-full shadow-sm whitespace-nowrap">Semua</button>
+            <button class="bg-white text-gray-600 font-bold text-[12px] px-5 py-2 rounded-full shadow-sm whitespace-nowrap border border-gray-100">Pemesanan</button>
+            <button class="bg-white text-gray-600 font-bold text-[12px] px-5 py-2 rounded-full shadow-sm whitespace-nowrap border border-gray-100">Transaksi</button>
+        </div>
+
+        <div id="history-list" class="flex flex-col gap-3">
+            <!-- Item 1 -->
+            <div class="flex bg-white rounded-[18px] shadow-sm overflow-hidden border border-gray-50">
+                <div class="w-3 bg-[#4ade80]"></div>
+                <div class="p-4 flex-1 relative">
+                    <h3 class="font-bold text-base mb-0.5">Becak Motor</h3>
+                    <p class="text-[11px] text-gray-400 mb-2 leading-tight">Minggu, 19/04/2026 · #23242324</p>
+                    <p class="text-[10px] text-gray-600 mb-0.5"><b class="text-gray-800">Jemput:</b> Ruko Harmoni</p>
+                    <p class="text-[10px] text-gray-600 mb-0.5"><b class="text-gray-800">Tujuan:</b> Jl. Pandalungan No 3</p>
+                    <p class="text-[10px] text-gray-600 mb-0.5"><b class="text-gray-800">Pukul:</b> 10.00 WIB</p>
+                    <p class="text-[10px] text-gray-600"><b class="text-gray-800">Driver:</b> Mr. Handsome Joe</p>
+                    <p class="absolute top-3 right-3 text-[9px] font-bold text-red-500 cursor-pointer">Laporkan?</p>
+                    <div class="absolute top-9 right-3 bg-[#4ade80] text-black text-[10px] font-bold px-2.5 py-1 rounded-lg">Berhasil</div>
+                </div>
+            </div>
+            <!-- Item 2 -->
+            <div class="flex bg-white rounded-[18px] shadow-sm overflow-hidden border border-gray-50">
+                <div class="w-3 bg-[#facc15]"></div>
+                <div class="p-4 flex-1 relative">
+                    <h3 class="font-bold text-base mb-0.5">Andong Reguler</h3>
+                    <p class="text-[11px] text-gray-400 mb-2 leading-tight">Minggu, 19/04/2026 · #23242325</p>
+                    <p class="text-[10px] text-gray-600 mb-0.5"><b class="text-gray-800">Jemput:</b> Ruko Harmoni</p>
+                    <p class="text-[10px] text-gray-600 mb-0.5"><b class="text-gray-800">Tujuan:</b> Jl. Pandalungan No 3</p>
+                    <p class="text-[10px] text-gray-600 mb-0.5"><b class="text-gray-800">Pukul:</b> 09.30 WIB</p>
+                    <p class="text-[10px] text-gray-600"><b class="text-gray-800">Driver:</b> —</p>
+                    <p class="absolute top-3 right-3 text-[9px] font-bold text-red-500 cursor-pointer">Laporkan?</p>
+                    <div class="absolute top-9 right-3 bg-[#facc15] text-black text-[10px] font-bold px-2.5 py-1 rounded-lg">Di Proses</div>
+                </div>
+            </div>
+            <!-- Item 3 -->
+            <div class="flex bg-white rounded-[18px] shadow-sm overflow-hidden border border-gray-50">
+                <div class="w-3 bg-red-400"></div>
+                <div class="p-4 flex-1 relative">
+                    <h3 class="font-bold text-base mb-0.5">Becak Sepeda</h3>
+                    <p class="text-[11px] text-gray-400 mb-2 leading-tight">Minggu, 19/04/2026 · #23242326</p>
+                    <p class="text-[10px] text-gray-600 mb-0.5"><b class="text-gray-800">Jemput:</b> Ruko Harmoni</p>
+                    <p class="text-[10px] text-gray-600 mb-0.5"><b class="text-gray-800">Tujuan:</b> Jl. Pandalungan No 3</p>
+                    <p class="text-[10px] text-gray-600 mb-0.5"><b class="text-gray-800">Pukul:</b> 08.15 WIB</p>
+                    <p class="text-[10px] text-gray-600"><b class="text-gray-800">Driver:</b> —</p>
+                    <p class="absolute top-3 right-3 text-[9px] font-bold text-red-500 cursor-pointer">Laporkan?</p>
+                    <div class="absolute top-9 right-3 bg-red-500 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg">Gagal</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== SCREEN 6: PROMO ===== -->
+    <div id="promo-screen" class="screen bg-[#1a1a1a] text-white no-scrollbar">
+        <div class="relative overflow-hidden" style="height:55%;">
+            <div class="w-full h-full bg-gradient-to-b from-[#2a1a0e] to-[#1a1a1a] flex items-center justify-center">
+                <div class="text-center opacity-30">
+                    <i class="fa-solid fa-bicycle text-[120px] text-[#f28c68]"></i>
+                </div>
+            </div>
+            <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#1a1a1a]"></div>
+            <div class="absolute top-12 left-5">
+                <i class="fa-solid fa-arrow-left text-xl cursor-pointer bg-black/50 w-10 h-10 rounded-full flex items-center justify-center" onclick="navTo('home-screen')"></i>
+            </div>
+            <div class="absolute top-12 right-5 bg-[#f28c68] text-white text-[10px] font-bold px-3 py-1 rounded-full">LIMITED OFFER</div>
+        </div>
+        <div class="flex-1 p-6 pb-24 -mt-4">
+            <div class="flex gap-2 mb-4">
+                <span class="bg-[#f28c68]/20 text-[#f28c68] text-[10px] font-bold px-3 py-1 rounded-full">PREMIUM</span>
+                <span class="bg-white/10 text-white/60 text-[10px] font-bold px-3 py-1 rounded-full">EXCLUSIVE</span>
+            </div>
+            <h2 class="text-3xl font-bold mb-2 leading-tight">Becak Premium.<br><span class="text-[#f28c68]">Enjoy the luxury.</span></h2>
+            <p class="text-sm text-gray-400 mb-6 leading-relaxed">Nikmati perjalanan eksklusif dengan Becak Premium kami. Armada premium, driver profesional, harga terjangkau.</p>
+            <div class="grid grid-cols-3 gap-3 mb-6">
+                <div class="bg-white/5 rounded-2xl p-3 text-center">
+                    <p class="text-xl font-bold text-[#f28c68]">20%</p>
+                    <p class="text-[9px] text-gray-400 mt-1">Diskon</p>
+                </div>
+                <div class="bg-white/5 rounded-2xl p-3 text-center">
+                    <p class="text-xl font-bold text-[#f28c68]">24/7</p>
+                    <p class="text-[9px] text-gray-400 mt-1">Layanan</p>
+                </div>
+                <div class="bg-white/5 rounded-2xl p-3 text-center">
+                    <p class="text-xl font-bold text-[#f28c68]">4.9★</p>
+                    <p class="text-[9px] text-gray-400 mt-1">Rating</p>
+                </div>
+            </div>
+            <button class="w-full bg-[#f28c68] text-white font-bold py-4 rounded-full shadow-lg text-base" onclick="goToMap('Becak')">Pesan Sekarang →</button>
+        </div>
+    </div>
+
+    <!-- ===== SCREEN 7: PROFILE ===== -->
+    <div id="profile-screen" class="screen pt-12 px-5 no-scrollbar bg-[#fafafa]">
+        <h2 class="text-[22px] font-bold mb-6">Profil Saya</h2>
+
+        <!-- Profile Card -->
+        <div class="bg-white rounded-[24px] p-5 mb-5 shadow-sm border border-gray-100 flex items-center gap-4">
+            <div class="w-16 h-16 rounded-full border-3 border-[#f2a681] flex items-center justify-center bg-[#fde8d4] flex-shrink-0" style="border-width:3px; border-color:#f2a681;">
+                <i class="fa-solid fa-user text-[#f28c68] text-2xl"></i>
+            </div>
+            <div class="flex-1">
+                <h3 class="font-bold text-xl">Orang Baik</h3>
+                <p class="text-gray-500 text-[12px] font-semibold mt-0.5">+62 812 3456 7890</p>
+                <div class="flex gap-2 mt-2">
+                    <span class="bg-[#fde8d4] text-[#f28c68] text-[9px] font-bold px-2 py-0.5 rounded-full">⭐ Member Gold</span>
+                    <span class="bg-gray-100 text-gray-500 text-[9px] font-bold px-2 py-0.5 rounded-full">30.000 Poin</span>
+                </div>
+            </div>
+            <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center cursor-pointer">
+                <i class="fa-solid fa-pen text-gray-500 text-xs"></i>
+            </div>
+        </div>
+
+        <!-- Saldo Card -->
+        <div class="gradient-peach rounded-[24px] p-5 mb-5 shadow-sm">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-[11px] font-semibold text-gray-700">Saldo LINTAS</p>
+                    <p class="text-2xl font-bold mt-1">Rp 600.000</p>
+                </div>
+                <div class="flex gap-3">
+                    <div class="text-center cursor-pointer">
+                        <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm mb-1"><i class="fa-solid fa-plus text-[#f28c68]"></i></div>
+                        <p class="text-[9px] font-bold">Top-Up</p>
+                    </div>
+                    <div class="text-center cursor-pointer">
+                        <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm mb-1"><i class="fa-solid fa-arrow-up text-[#f28c68]"></i></div>
+                        <p class="text-[9px] font-bold">Transfer</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Menu List -->
+        <div class="bg-white rounded-[24px] p-2 mb-5 shadow-sm border border-gray-100">
+            <div class="flex items-center gap-4 p-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 rounded-xl transition">
+                <div class="w-9 h-9 bg-[#fde8d4] rounded-full flex items-center justify-center"><i class="fa-solid fa-gear text-[#f28c68]"></i></div>
+                <p class="text-sm font-bold flex-1">Pengaturan Akun</p>
+                <i class="fa-solid fa-chevron-right text-xs text-gray-400"></i>
+            </div>
+            <div class="flex items-center gap-4 p-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 rounded-xl transition">
+                <div class="w-9 h-9 bg-[#fde8d4] rounded-full flex items-center justify-center"><i class="fa-solid fa-circle-question text-[#f28c68]"></i></div>
+                <p class="text-sm font-bold flex-1">Pusat Bantuan</p>
+                <i class="fa-solid fa-chevron-right text-xs text-gray-400"></i>
+            </div>
+            <div class="flex items-center gap-4 p-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 rounded-xl transition">
+                <div class="w-9 h-9 bg-[#fde8d4] rounded-full flex items-center justify-center"><i class="fa-solid fa-shield text-[#f28c68]"></i></div>
+                <p class="text-sm font-bold flex-1">Privasi &amp; Keamanan</p>
+                <i class="fa-solid fa-chevron-right text-xs text-gray-400"></i>
+            </div>
+            <div class="flex items-center gap-4 p-3 cursor-pointer hover:bg-gray-50 rounded-xl transition">
+                <div class="w-9 h-9 bg-[#fde8d4] rounded-full flex items-center justify-center"><i class="fa-solid fa-file-contract text-[#f28c68]"></i></div>
+                <p class="text-sm font-bold flex-1">Syarat &amp; Ketentuan</p>
+                <i class="fa-solid fa-chevron-right text-xs text-gray-400"></i>
+            </div>
+        </div>
+
+        <button class="w-full py-3.5 bg-red-50 text-red-500 font-bold rounded-full border border-red-200 mb-4" onclick="navTo('home-screen')">
+            <i class="fa-solid fa-right-from-bracket mr-2"></i>Keluar Akun
+        </button>
+    </div>
+
+    <!-- ===== SCREEN 8: EXPLORE ===== -->
+    <div id="explore-screen" class="screen no-scrollbar bg-[#fafafa]">
+        <div class="bg-gradient-to-b from-[#f8ab81] via-[#fde8d4] to-[#fafafa] pt-12 px-5 pb-5 flex-shrink-0">
+            <h1 class="text-[22px] font-bold mb-0.5">Jelajahi</h1>
+            <p class="text-[12px] text-gray-600 font-semibold">Temukan driver &amp; destinasi di sekitar Anda</p>
+        </div>
+
+        <div class="px-5">
+            <!-- Live Map Preview -->
+            <div class="relative w-full h-52 rounded-[24px] overflow-hidden shadow-sm mb-5 border border-gray-100">
+                <div id="explore-map-container" style="height:100%; border-radius:24px; overflow:hidden; position:relative;">
+                    <div id="explore-leaflet" style="width:100%; height:100%;"></div>
+                    <!-- Overlay dots -->
+                    <div class="absolute inset-0 pointer-events-none" style="z-index:400;">
+                        <div class="pulse-dot absolute w-5 h-5 bg-[#f28c68] rounded-full border-2 border-white shadow-md flex items-center justify-center" style="top:35%;left:40%;">
+                            <i class="fa-solid fa-bicycle text-white" style="font-size:7px;"></i>
+                        </div>
+                        <div class="pulse-dot absolute w-5 h-5 bg-[#f28c68] rounded-full border-2 border-white shadow-md flex items-center justify-center" style="top:55%;left:65%;">
+                            <i class="fa-solid fa-bicycle text-white" style="font-size:7px;"></i>
+                        </div>
+                        <div class="pulse-dot absolute w-5 h-5 bg-[#f28c68] rounded-full border-2 border-white shadow-md flex items-center justify-center" style="top:25%;left:70%;">
+                            <i class="fa-solid fa-horse text-white" style="font-size:7px;"></i>
+                        </div>
+                        <div class="pulse-dot absolute w-5 h-5 bg-[#f28c68] rounded-full border-2 border-white shadow-md flex items-center justify-center" style="top:70%;left:28%;">
+                            <i class="fa-solid fa-bicycle text-white" style="font-size:7px;"></i>
+                        </div>
+                        <div class="pulse-dot absolute w-5 h-5 bg-[#f28c68] rounded-full border-2 border-white shadow-md flex items-center justify-center" style="top:45%;left:18%;">
+                            <i class="fa-solid fa-horse text-white" style="font-size:7px;"></i>
+                        </div>
+                        <div class="absolute w-4 h-4 bg-blue-500 rounded-full border-2 border-white shadow-md" style="top:50%;left:50%;transform:translate(-50%,-50%);"></div>
+                        <div class="absolute w-10 h-10 bg-blue-500/20 rounded-full" style="top:50%;left:50%;transform:translate(-50%,-50%);"></div>
+                    </div>
+                    <!-- Badge -->
+                    <div class="absolute top-3 right-3 bg-white/90 px-3 py-1.5 rounded-full shadow-sm" style="z-index:500;">
+                        <p class="text-[10px] font-bold text-[#f28c68]"><i class="fa-solid fa-circle text-green-500 mr-1"></i>12 Driver Online</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-3 gap-3 mb-5">
+                <div class="bg-white rounded-[18px] p-3 text-center shadow-sm border border-gray-100">
+                    <div class="w-8 h-8 bg-[#fde8d4] rounded-full flex items-center justify-center mx-auto mb-1"><i class="fa-solid fa-bicycle text-[#f28c68] text-sm"></i></div>
+                    <p class="text-[18px] font-bold text-[#f28c68]">8</p>
+                    <p class="text-[9px] text-gray-500 font-semibold">Becak</p>
+                </div>
+                <div class="bg-white rounded-[18px] p-3 text-center shadow-sm border border-gray-100">
+                    <div class="w-8 h-8 bg-[#fde8d4] rounded-full flex items-center justify-center mx-auto mb-1"><i class="fa-solid fa-horse text-[#f28c68] text-sm"></i></div>
+                    <p class="text-[18px] font-bold text-[#f28c68]">4</p>
+                    <p class="text-[9px] text-gray-500 font-semibold">Andong</p>
+                </div>
+                <div class="bg-white rounded-[18px] p-3 text-center shadow-sm border border-gray-100">
+                    <div class="w-8 h-8 bg-[#fde8d4] rounded-full flex items-center justify-center mx-auto mb-1"><i class="fa-solid fa-star text-[#f28c68] text-sm"></i></div>
+                    <p class="text-[18px] font-bold text-[#f28c68]">4.9</p>
+                    <p class="text-[9px] text-gray-500 font-semibold">Rating</p>
+                </div>
+            </div>
+
+            <!-- Destinasi Populer -->
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="font-bold text-[15px]">Destinasi Populer</h3>
+                <i class="fa-solid fa-chevron-right text-gray-400 text-xs cursor-pointer"></i>
+            </div>
+            <div class="flex gap-3 overflow-x-auto no-scrollbar pb-3 mb-5">
+                <div class="flex-shrink-0 w-36 bg-white rounded-[18px] overflow-hidden shadow-sm border border-gray-100 cursor-pointer" onclick="goToMap('Becak')">
+                    <div class="w-full h-24 bg-gradient-to-br from-[#fde8d4] to-[#f2a681] flex items-center justify-center"><i class="fa-solid fa-building text-white text-4xl opacity-60"></i></div>
+                    <div class="p-3">
+                        <p class="text-[12px] font-bold">Alun-Alun Kota</p>
+                        <p class="text-[9px] text-gray-500 mt-0.5"><i class="fa-solid fa-location-dot mr-1 text-[#f28c68]"></i>1.2 km</p>
+                    </div>
+                </div>
+                <div class="flex-shrink-0 w-36 bg-white rounded-[18px] overflow-hidden shadow-sm border border-gray-100 cursor-pointer" onclick="goToMap('Andong')">
+                    <div class="w-full h-24 bg-gradient-to-br from-[#fde8d4] to-[#f2a681] flex items-center justify-center"><i class="fa-solid fa-store text-white text-4xl opacity-60"></i></div>
+                    <div class="p-3">
+                        <p class="text-[12px] font-bold">Pasar Tradisional</p>
+                        <p class="text-[9px] text-gray-500 mt-0.5"><i class="fa-solid fa-location-dot mr-1 text-[#f28c68]"></i>2.5 km</p>
+                    </div>
+                </div>
+                <div class="flex-shrink-0 w-36 bg-white rounded-[18px] overflow-hidden shadow-sm border border-gray-100 cursor-pointer" onclick="goToMap('Becak')">
+                    <div class="w-full h-24 bg-gradient-to-br from-[#fde8d4] to-[#f2a681] flex items-center justify-center"><i class="fa-solid fa-tree text-white text-4xl opacity-60"></i></div>
+                    <div class="p-3">
+                        <p class="text-[12px] font-bold">Taman Kota</p>
+                        <p class="text-[9px] text-gray-500 mt-0.5"><i class="fa-solid fa-location-dot mr-1 text-[#f28c68]"></i>3.1 km</p>
+                    </div>
+                </div>
+                <div class="flex-shrink-0 w-36 bg-white rounded-[18px] overflow-hidden shadow-sm border border-gray-100 cursor-pointer" onclick="goToMap('Andong')">
+                    <div class="w-full h-24 bg-gradient-to-br from-[#fde8d4] to-[#f2a681] flex items-center justify-center"><i class="fa-solid fa-landmark text-white text-4xl opacity-60"></i></div>
+                    <div class="p-3">
+                        <p class="text-[12px] font-bold">Keraton</p>
+                        <p class="text-[9px] text-gray-500 mt-0.5"><i class="fa-solid fa-location-dot mr-1 text-[#f28c68]"></i>4.0 km</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Driver Terdekat -->
+            <div class="flex justify-between items-center mb-3">
+                <h3 class="font-bold text-[15px]">Driver Terdekat</h3>
+                <i class="fa-solid fa-chevron-right text-gray-400 text-xs cursor-pointer"></i>
+            </div>
+            <div class="flex flex-col gap-3 mb-4">
+                <div class="flex items-center gap-4 bg-white rounded-[18px] p-4 shadow-sm border border-gray-100 cursor-pointer" onclick="goToMap('Becak')">
+                    <div class="w-11 h-11 rounded-full bg-[#fde8d4] flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-bicycle text-[#f28c68] text-lg"></i></div>
+                    <div class="flex-1">
+                        <p class="text-[13px] font-bold">Budi Santoso</p>
+                        <p class="text-[10px] text-gray-500 mt-0.5">Becak Sepeda · <span class="text-green-500 font-semibold">● 300m</span></p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[12px] font-bold text-[#f28c68]">★ 4.9</p>
+                        <p class="text-[9px] text-gray-400 mt-0.5">~1 mnt</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 bg-white rounded-[18px] p-4 shadow-sm border border-gray-100 cursor-pointer" onclick="goToMap('Andong')">
+                    <div class="w-11 h-11 rounded-full bg-[#fde8d4] flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-horse text-[#f28c68] text-lg"></i></div>
+                    <div class="flex-1">
+                        <p class="text-[13px] font-bold">Agus Purnomo</p>
+                        <p class="text-[10px] text-gray-500 mt-0.5">Andong Reguler · <span class="text-yellow-500 font-semibold">● 650m</span></p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[12px] font-bold text-[#f28c68]">★ 4.7</p>
+                        <p class="text-[9px] text-gray-400 mt-0.5">~3 mnt</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 bg-white rounded-[18px] p-4 shadow-sm border border-gray-100 cursor-pointer" onclick="goToMap('Becak')">
+                    <div class="w-11 h-11 rounded-full bg-[#fde8d4] flex items-center justify-center flex-shrink-0"><i class="fa-solid fa-bicycle text-[#f28c68] text-lg"></i></div>
+                    <div class="flex-1">
+                        <p class="text-[13px] font-bold">Darmawan</p>
+                        <p class="text-[10px] text-gray-500 mt-0.5">Becak Motor · <span class="text-yellow-500 font-semibold">● 900m</span></p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[12px] font-bold text-[#f28c68]">★ 4.8</p>
+                        <p class="text-[9px] text-gray-400 mt-0.5">~4 mnt</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== SCREEN 9: CART / PESANAN AKTIF ===== -->
+    <div id="cart-screen" class="screen no-scrollbar bg-[#fafafa]">
+        <div class="bg-gradient-to-b from-[#f8ab81] via-[#fde8d4] to-[#fafafa] pt-12 px-5 pb-6 flex-shrink-0">
+            <h1 class="text-[22px] font-bold mb-0.5">Pesanan Aktif</h1>
+            <p class="text-[12px] text-gray-600 font-semibold">Kelola pesanan Anda saat ini</p>
+        </div>
+
+        <div class="px-5">
+            <!-- Active Order -->
+            <div class="gradient-peach rounded-[24px] p-5 mb-5 shadow-sm relative overflow-hidden">
+                <div class="absolute -right-6 -top-6 w-28 h-28 bg-white/20 rounded-full"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center gap-2 mb-3">
+                        <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <p class="text-[11px] font-bold text-green-700">PESANAN AKTIF</p>
+                    </div>
+                    <h3 class="text-[18px] font-bold mb-1">Becak Motor</h3>
+                    <p class="text-[11px] text-gray-700 mb-4">Driver: Mr. Handsome Joe · ~3 mnt lagi</p>
+                    <div class="flex gap-2">
+                        <button class="flex-1 py-2.5 bg-black text-white rounded-full text-[12px] font-bold" onclick="startSimulation()">
+                            <i class="fa-solid fa-map-location-dot mr-1"></i> Lacak Perjalanan
+                        </button>
+                        <button class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm">
+                            <i class="fa-solid fa-phone text-[#f28c68] text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ringkasan -->
+            <div class="bg-white rounded-[24px] p-5 mb-5 shadow-sm border border-gray-100">
+                <h3 class="font-bold text-[14px] mb-4 flex items-center gap-2"><i class="fa-solid fa-receipt text-[#f28c68]"></i> Ringkasan Pesanan</h3>
+                <div class="flex justify-between items-center mb-2.5 pb-2.5 border-b border-gray-100">
+                    <div><p class="text-[12px] font-bold">Becak Motor</p><p class="text-[10px] text-gray-500 mt-0.5">Ruko Harmoni → Jl. Pandalungan</p></div>
+                    <p class="text-[13px] font-bold">Rp 5.000</p>
+                </div>
+                <div class="flex justify-between items-center mb-2.5 pb-2.5 border-b border-gray-100">
+                    <p class="text-[12px] text-gray-600">Biaya Layanan</p>
+                    <p class="text-[12px] font-semibold">Rp 500</p>
+                </div>
+                <div class="flex justify-between items-center mb-2.5 pb-2.5 border-b border-gray-100">
+                    <p class="text-[12px] text-gray-600">Diskon Promo</p>
+                    <p class="text-[12px] font-semibold text-green-600">– Rp 1.000</p>
+                </div>
+                <div class="flex justify-between items-center">
+                    <p class="text-[14px] font-bold">Total</p>
+                    <p class="text-[15px] font-bold text-[#f28c68]">Rp 4.500</p>
+                </div>
+            </div>
+
+            <!-- Metode Pembayaran -->
+            <div class="bg-white rounded-[24px] p-5 mb-5 shadow-sm border border-gray-100">
+                <h3 class="font-bold text-[14px] mb-4 flex items-center gap-2"><i class="fa-solid fa-wallet text-[#f28c68]"></i> Metode Pembayaran</h3>
+                <div class="flex items-center gap-3 p-3 border-2 border-[#f28c68] rounded-[14px] mb-3 bg-[#fde8d4]/30 cursor-pointer">
+                    <div class="w-9 h-9 bg-[#f28c68] rounded-full flex items-center justify-center text-white"><i class="fa-solid fa-coins text-sm"></i></div>
+                    <div class="flex-1">
+                        <p class="text-[12px] font-bold">Saldo LINTAS</p>
+                        <p class="text-[10px] text-gray-500">Rp 600.000 tersedia</p>
+                    </div>
+                    <div class="w-5 h-5 rounded-full bg-[#f28c68] flex items-center justify-center"><i class="fa-solid fa-check text-white text-[8px]"></i></div>
+                </div>
+                <div class="flex items-center gap-3 p-3 border border-gray-100 rounded-[14px] cursor-pointer">
+                    <div class="w-9 h-9 bg-gray-100 rounded-full flex items-center justify-center text-gray-500"><i class="fa-solid fa-money-bill text-sm"></i></div>
+                    <div class="flex-1">
+                        <p class="text-[12px] font-bold text-gray-600">Tunai</p>
+                        <p class="text-[10px] text-gray-400">Bayar langsung ke driver</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kode Promo -->
+            <div class="bg-white rounded-[24px] p-5 mb-4 shadow-sm border border-gray-100">
+                <h3 class="font-bold text-[14px] mb-3 flex items-center gap-2"><i class="fa-solid fa-tag text-[#f28c68]"></i> Kode Promo</h3>
+                <div class="flex gap-2">
+                    <input type="text" placeholder="Masukkan kode promo..." class="flex-1 bg-[#fafafa] border border-gray-200 rounded-[12px] py-2.5 px-3 text-sm font-medium focus:outline-none focus:border-[#f28c68]">
+                    <button class="px-4 py-2.5 bg-[#f28c68] text-white rounded-[12px] text-[12px] font-bold">Pakai</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== BOTTOM NAVIGATION ===== -->
+    <div class="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 flex justify-around items-center py-3.5 px-2 z-50 shadow-[0_-4px_16px_rgba(0,0,0,0.05)]">
+        <button id="nav-home"    onclick="navTo('home-screen')"    class="nav-btn flex flex-col items-center gap-0.5 text-[#f28c68]">
+            <i class="fa-solid fa-house text-xl"></i><span class="text-[8px] font-bold">Beranda</span>
+        </button>
+        <button id="nav-explore" onclick="navTo('explore-screen')" class="nav-btn flex flex-col items-center gap-0.5 text-gray-300">
+            <i class="fa-regular fa-compass text-xl"></i><span class="text-[8px] font-bold">Jelajahi</span>
+        </button>
+        <button id="nav-cart"    onclick="navTo('cart-screen')"    class="nav-btn flex flex-col items-center gap-0.5 text-gray-300">
+            <i class="fa-solid fa-cart-shopping text-xl"></i><span class="text-[8px] font-bold">Pesanan</span>
+        </button>
+        <button id="nav-history" onclick="navTo('history-screen')" class="nav-btn flex flex-col items-center gap-0.5 text-gray-300">
+            <i class="fa-solid fa-book-open text-xl"></i><span class="text-[8px] font-bold">Aktivitas</span>
+        </button>
+        <button id="nav-profile" onclick="navTo('profile-screen')" class="nav-btn flex flex-col items-center gap-0.5 text-gray-300">
+            <i class="fa-regular fa-user text-xl"></i><span class="text-[8px] font-bold">Profil</span>
+        </button>
+        <div class="absolute bottom-1 left-1/2 -translate-x-1/2 w-28 h-1 bg-black rounded-full opacity-10"></div>
+    </div>
+
+</div><!-- end app-container -->
+
+<script>
+// =========================================================
+//  STATE
+// =========================================================
+let activeVehicle  = 'Becak';
+let currentMainType = 'Becak Sepeda';
+
+// Leaflet instances
+let mapScreenMap   = null;
+let mapDriverLayer = null;
+let simMap         = null;
+let simDriverMkr   = null;
+let simUserMkr     = null;
+let simDestMkr     = null;
+let simRouteLine   = null;
+let animRafId      = null;
+let exploreMap     = null;
+let detailMiniMap  = null;
+
+// Simulation coordinates (Yogyakarta area)
+const COORDS = {
+    driverStart : [-7.7870, 110.3790],
+    userPickup  : [-7.7975, 110.3665],
+    destination : [-7.8120, 110.3500]
+};
+
+// =========================================================
+//  NAVIGATION
+// =========================================================
+function navTo(screenId) {
+    document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+    document.getElementById(screenId).classList.add('active');
+
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('text-[#f28c68]');
+        btn.classList.add('text-gray-300');
+    });
+
+    const navMap = {
+        'home-screen'   : 'nav-home',
+        'explore-screen': 'nav-explore',
+        'cart-screen'   : 'nav-cart',
+        'history-screen': 'nav-history',
+        'profile-screen': 'nav-profile'
+    };
+    if (navMap[screenId]) {
+        const btn = document.getElementById(navMap[screenId]);
+        btn.classList.remove('text-gray-300');
+        btn.classList.add('text-[#f28c68]');
+    }
+
+    // Lazy-init maps
+    if (screenId === 'explore-screen') setTimeout(initExploreMap, 80);
+    if (screenId === 'detail-screen')  setTimeout(initDetailMiniMap, 80);
+}
+
+// =========================================================
+//  LEAFLET HELPERS
+// =========================================================
+function makeDriverIcon(vehicleType) {
+    const icon = vehicleType === 'Becak' ? 'fa-bicycle' : 'fa-horse';
+    return L.divIcon({
+        className: '',
+        html: `<div style="width:36px;height:36px;background:#f28c68;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2.5px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.35);">
+                 <i class="fa-solid ${icon}" style="color:white;font-size:14px;"></i>
+               </div>`,
+        iconSize: [36, 36], iconAnchor: [18, 18]
+    });
+}
+
+function makeUserIcon() {
+    return L.divIcon({
+        className: '',
+        html: `<div style="width:18px;height:18px;background:#3b82f6;border-radius:50%;border:3px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.4);"></div>`,
+        iconSize: [18, 18], iconAnchor: [9, 9]
+    });
+}
+
+function makeDestIcon() {
+    return L.divIcon({
+        className: '',
+        html: `<div style="width:36px;height:36px;background:#1f2937;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2.5px solid white;box-shadow:0 2px 8px rgba(0,0,0,0.4);">
+                 <i class="fa-solid fa-flag" style="color:white;font-size:13px;"></i>
+               </div>`,
+        iconSize: [36, 36], iconAnchor: [18, 18]
+    });
+}
+
+// =========================================================
+//  MAP SCREEN (vehicle selection)
+// =========================================================
+function goToMap(type) {
+    updateMapVehicle(type);
+    navTo('map-screen');
+    setTimeout(initMapScreenLeaflet, 80);
+}
+
+function initMapScreenLeaflet() {
+    const el = document.getElementById('map-leaflet');
+    if (!el) return;
+
+    if (!mapScreenMap) {
+        mapScreenMap = L.map(el, {
+            zoomControl: false,
+            attributionControl: true,
+            dragging: true,
+            touchZoom: true,
+            scrollWheelZoom: false,
+            doubleClickZoom: false
+        }).setView(COORDS.userPickup, 15);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap'
+        }).addTo(mapScreenMap);
+
+        // User marker (blue dot)
+        L.circleMarker(COORDS.userPickup, {
+            radius: 9, fillColor: '#3b82f6', color: 'white', weight: 3, fillOpacity: 1
+        }).addTo(mapScreenMap).bindPopup('Lokasi Anda');
+
+        mapDriverLayer = L.layerGroup().addTo(mapScreenMap);
+    }
+
+    mapScreenMap.invalidateSize();
+    refreshMapDriverMarkers();
+}
+
+function refreshMapDriverMarkers() {
+    if (!mapDriverLayer) return;
+    mapDriverLayer.clearLayers();
+
+    const offsets = [
+        [-0.0055,  0.0120],
+        [-0.0015,  0.0060],
+        [-0.0080,  0.0040],
+        [-0.0030, -0.0050],
+    ];
+
+    offsets.forEach(([dlat, dlng]) => {
+        const pos = [COORDS.userPickup[0] + dlat, COORDS.userPickup[1] + dlng];
+        L.marker(pos, { icon: makeDriverIcon(activeVehicle) })
+            .bindPopup(activeVehicle === 'Becak' ? 'Becak Terdekat' : 'Andong Terdekat')
+            .addTo(mapDriverLayer);
+    });
+}
+
+function updateMapVehicle(type) {
+    activeVehicle = type;
+
+    const btnBecak  = document.getElementById('toggle-becak');
+    const btnAndong = document.getElementById('toggle-andong');
+    const title     = document.getElementById('map-vehicle-title');
+    const subType   = document.getElementById('map-vehicle-type');
+    const vvBecak   = document.getElementById('vv-becak');
+    const vvAndong  = document.getElementById('vv-andong');
+
+    if (type === 'Becak') {
+        btnBecak.className  = 'flex-1 py-3 rounded-full font-bold text-[12px] gradient-peach-h transition-all shadow-sm text-black';
+        btnAndong.className = 'flex-1 py-3 rounded-full font-bold text-[12px] text-gray-400 bg-transparent transition-all';
+        title.innerText = 'Becak'; subType.innerText = 'Becak';
+        currentMainType = 'Becak Sepeda';
+        vvBecak.style.display  = 'flex';
+        vvAndong.style.display = 'none';
+
+        document.getElementById('detail-category').innerText      = 'BECAK TERDEKAT';
+        document.getElementById('detail-main-name').innerText     = 'Becak Sepeda';
+        document.getElementById('detail-options-title').innerText = 'Pilihan Becak lain yang tersedia';
+        document.getElementById('opt1-name').innerText  = 'Becak Sepeda';
+        document.getElementById('opt1-price').innerText = '3.000';
+        document.getElementById('opt2-name').innerText  = 'Becak Motor';
+        document.getElementById('opt2-price').innerText = '5.000';
+    } else {
+        btnAndong.className = 'flex-1 py-3 rounded-full font-bold text-[12px] gradient-peach-h transition-all shadow-sm text-black';
+        btnBecak.className  = 'flex-1 py-3 rounded-full font-bold text-[12px] text-gray-400 bg-transparent transition-all';
+        title.innerText = 'Andong'; subType.innerText = 'Andong';
+        currentMainType = 'Andong Reguler';
+        vvAndong.style.display = 'flex';
+        vvBecak.style.display  = 'none';
+
+        document.getElementById('detail-category').innerText      = 'ANDONG TERDEKAT';
+        document.getElementById('detail-main-name').innerText     = 'Andong Reguler';
+        document.getElementById('detail-options-title').innerText = 'Pilihan Andong lain yang tersedia';
+        document.getElementById('opt1-name').innerText  = 'Andong Reguler';
+        document.getElementById('opt1-price').innerText = '10.000';
+        document.getElementById('opt2-name').innerText  = 'Andong Comfort';
+        document.getElementById('opt2-price').innerText = '16.000';
+    }
+
+    if (mapDriverLayer) refreshMapDriverMarkers();
+}
+
+function goToDetail() {
+    navTo('detail-screen');
+}
+
+// =========================================================
+//  DETAIL MINI MAP
+// =========================================================
+function initDetailMiniMap() {
+    const el = document.getElementById('detail-mini-map');
+    if (!el || detailMiniMap) return;
+    detailMiniMap = L.map(el, {
+        zoomControl: false, attributionControl: false,
+        dragging: false, touchZoom: false, scrollWheelZoom: false
+    }).setView(COORDS.userPickup, 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(detailMiniMap);
+    L.circleMarker(COORDS.userPickup, { radius:6, fillColor:'#3b82f6', color:'white', weight:2, fillOpacity:1 }).addTo(detailMiniMap);
+    L.circleMarker(COORDS.destination, { radius:6, fillColor:'#f28c68', color:'white', weight:2, fillOpacity:1 }).addTo(detailMiniMap);
+    L.polyline([COORDS.userPickup, COORDS.destination], { color:'#f28c68', weight:2, dashArray:'5,5', opacity:0.7 }).addTo(detailMiniMap);
+    detailMiniMap.invalidateSize();
+}
+
+// =========================================================
+//  EXPLORE MINI MAP
+// =========================================================
+function initExploreMap() {
+    const el = document.getElementById('explore-leaflet');
+    if (!el || exploreMap) return;
+    exploreMap = L.map(el, {
+        zoomControl: false, attributionControl: false,
+        dragging: false, touchZoom: false, scrollWheelZoom: false
+    }).setView(COORDS.userPickup, 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(exploreMap);
+    exploreMap.invalidateSize();
+}
+
+// =========================================================
+//  SIMULATION (animated Leaflet OSM)
+// =========================================================
+function animateMarker(marker, fromPt, toPt, durationMs, onDone) {
+    if (animRafId) cancelAnimationFrame(animRafId);
+    const start = performance.now();
+    function step(now) {
+        const t = Math.min((now - start) / durationMs, 1);
+        const ease = t < 0.5 ? 2*t*t : -1 + (4 - 2*t)*t;
+        marker.setLatLng([
+            fromPt[0] + (toPt[0] - fromPt[0]) * ease,
+            fromPt[1] + (toPt[1] - fromPt[1]) * ease
+        ]);
+        if (t < 1) animRafId = requestAnimationFrame(step);
+        else if (onDone) onDone();
+    }
+    animRafId = requestAnimationFrame(step);
+}
+
+function startSimulation() {
+    navTo('sim-screen');
+
+    const statusBadge = document.getElementById('sim-status-badge');
+    const statusText  = document.getElementById('sim-status-text');
+    const mainTitle   = document.getElementById('sim-main-title');
+    const etaText     = document.getElementById('sim-eta');
+    const overlay     = document.getElementById('sim-success-overlay');
+    const progressBar = document.getElementById('sim-progress-bar');
+
+    document.getElementById('sim-vehicle-info').innerText = `${currentMainType} · AB 1234 CD`;
+
+    overlay.style.opacity = '0';
+    overlay.style.pointerEvents = 'none';
+    progressBar.style.transitionDuration = '0ms';
+    progressBar.style.width = '0%';
+
+    statusBadge.innerHTML = '<div class="loader"></div> <span id="sim-status-text">Mencari Driver...</span>';
+    mainTitle.innerText = 'Mencari driver terdekat...';
+    etaText.innerText   = 'Mohon tunggu sebentar';
+
+    // Init Leaflet map
+    setTimeout(() => {
+        if (simMap) { simMap.remove(); simMap = null; }
+
+        const mapEl = document.getElementById('sim-leaflet-map');
+        simMap = L.map(mapEl, {
+            zoomControl: false,
+            attributionControl: true
+        }).setView(COORDS.userPickup, 14);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© <a href="https://openstreetmap.org">OSM</a>'
+        }).addTo(simMap);
+
+        // Route line (pickup → destination)
+        simRouteLine = L.polyline([COORDS.userPickup, COORDS.destination], {
+            color: '#f28c68', weight: 3, dashArray: '8 5', opacity: 0.6
+        }).addTo(simMap);
+
+        // Destination marker (hidden initially)
+        simDestMkr = L.marker(COORDS.destination, {
+            icon: makeDestIcon(), opacity: 0
+        }).addTo(simMap).bindPopup('Tujuan Anda');
+
+        // User / pickup marker
+        simUserMkr = L.marker(COORDS.userPickup, {
+            icon: makeUserIcon()
+        }).addTo(simMap).bindPopup('Lokasi Penjemputan');
+
+        // Driver marker starts far away
+        simDriverMkr = L.marker(COORDS.driverStart, {
+            icon: makeDriverIcon(activeVehicle)
+        }).addTo(simMap).bindPopup('Driver Anda');
+
+        simMap.invalidateSize();
+
+        // ── PHASE 1: Driver found, moving to pickup ──
+        setTimeout(() => {
+            statusBadge.innerHTML = '<div class="loader"></div><span>Driver Menuju Lokasi...</span>';
+            mainTitle.innerText = 'Driver menuju lokasi penjemputan';
+            etaText.innerText   = '⏱ Estimasi tiba: 2 Menit';
+
+            // Smooth pan to watch driver move
+            simMap.flyTo(COORDS.driverStart, 14, { duration: 1 });
+
+            progressBar.style.transitionDuration = '3500ms';
+            progressBar.style.width = '40%';
+
+            animateMarker(simDriverMkr, COORDS.driverStart, COORDS.userPickup, 3500, () => {
+
+                // ── PHASE 2: Picked up, driving to destination ──
+                statusBadge.innerHTML = '<div class="w-2 h-2 rounded-full bg-[#f28c68] animate-pulse"></div><span>Dalam Perjalanan...</span>';
+                mainTitle.innerText = 'Dalam perjalanan ke tujuan';
+                etaText.innerText   = '⏱ Estimasi tiba: 5 Menit';
+
+                simUserMkr.setOpacity(0.3);
+                simDestMkr.setOpacity(1);
+                simMap.flyTo(COORDS.destination, 14, { duration: 1.5 });
+
+                progressBar.style.transitionDuration = '4500ms';
+                progressBar.style.width = '90%';
+
+                animateMarker(simDriverMkr, COORDS.userPickup, COORDS.destination, 4500, () => {
+
+                    // ── PHASE 3: Arrived ──
+                    statusBadge.innerHTML = '<i class="fa-solid fa-check text-[#f28c68]"></i><span class="font-bold text-[#f28c68]">Tiba!</span>';
+                    progressBar.style.transitionDuration = '500ms';
+                    progressBar.style.width = '100%';
+
+                    simMap.flyTo(COORDS.destination, 16, { duration: 1 });
+
+                    setTimeout(() => {
+                        overlay.style.opacity = '1';
+                        overlay.style.pointerEvents = 'auto';
+
+                        setTimeout(() => {
+                            addToHistory(currentMainType);
+                            navTo('history-screen');
+                            // Reset badge for next time
+                            statusBadge.innerHTML = '<div class="loader"></div><span id="sim-status-text">Mencari Driver...</span>';
+                        }, 2500);
+                    }, 800);
+                });
+            });
+        }, 1200);
+
+    }, 120);
+}
+
+function cancelSimulation() {
+    if (animRafId) cancelAnimationFrame(animRafId);
+    navTo('home-screen');
+}
+
+// =========================================================
+//  HISTORY
+// =========================================================
+function addToHistory(tipeKendaraan) {
+    const list = document.getElementById('history-list');
+    const now  = new Date();
+    const time = `${now.getHours().toString().padStart(2,'0')}.${now.getMinutes().toString().padStart(2,'0')} WIB`;
+    const orderId = Math.floor(10000000 + Math.random() * 90000000);
+
+    const item = `
+    <div class="flex bg-white rounded-[18px] shadow-sm overflow-hidden border border-green-200" style="animation:slideIn .4s ease;">
+        <div class="w-3 bg-[#4ade80]"></div>
+        <div class="p-4 flex-1 relative">
+            <h3 class="font-bold text-base mb-0.5">${tipeKendaraan}</h3>
+            <p class="text-[11px] text-gray-400 mb-2 leading-tight">Baru Saja · #${orderId}</p>
+            <p class="text-[10px] text-gray-600 mb-0.5"><b class="text-gray-800">Jemput:</b> Lokasi Anda</p>
+            <p class="text-[10px] text-gray-600 mb-0.5"><b class="text-gray-800">Tujuan:</b> Tujuan Dipilih</p>
+            <p class="text-[10px] text-gray-600 mb-0.5"><b class="text-gray-800">Pukul:</b> ${time}</p>
+            <p class="text-[10px] text-gray-600"><b class="text-gray-800">Driver:</b> Mr. Handsome Joe</p>
+            <p class="absolute top-3 right-3 text-[9px] font-bold text-red-500 cursor-pointer">Laporkan?</p>
+            <div class="absolute top-9 right-3 bg-[#4ade80] text-black text-[10px] font-bold px-2.5 py-1 rounded-lg">Berhasil</div>
+        </div>
+    </div>`;
+    list.insertAdjacentHTML('afterbegin', item);
+}
+</script>
+
+<style>
+@keyframes slideIn {
+    from { opacity:0; transform:translateY(-12px); }
+    to   { opacity:1; transform:translateY(0); }
+}
+</style>
+</body>
+</html>

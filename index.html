@@ -28,6 +28,7 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#e0e0e0;margin:0;padd
 @keyframes msgIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 @keyframes slideIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
 @keyframes pdot{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:.7}50%{transform:translate(-50%,-50%) scale(1.4);opacity:1}}
+@keyframes pulse-ring{0%{transform:scale(.85);opacity:.8}70%{transform:scale(1.15);opacity:0}100%{transform:scale(.85);opacity:0}}
 .ns::-webkit-scrollbar{display:none}.ns{-ms-overflow-style:none;scrollbar-width:none}
 .gp{background:linear-gradient(155deg,#fce5ce 0%,#f2a681 100%)}
 .gph{background:linear-gradient(90deg,#fce5ce 0%,#f2a681 100%)}
@@ -45,8 +46,17 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#e0e0e0;margin:0;padd
 .di:active{background:#fef3eb}
 .di:last-child{border-bottom:none}
 input{outline:none}
-/* Route info bar */
 .route-info{background:#fff7f2;border:1.5px solid #f2a681;border-radius:12px;padding:9px 13px;display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;color:#7a3200}
+/* Skip button */
+.skip-btn{position:absolute;bottom:47%;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;border:none;border-radius:50px;padding:9px 24px;font-size:12px;font-weight:700;cursor:pointer;z-index:1050;font-family:inherit;box-shadow:0 4px 16px rgba(0,0,0,.28);display:flex;align-items:center;gap:7px;transition:opacity .2s}
+.skip-btn:active{opacity:.7}
+/* Driver typing indicator */
+.typing-dots span{display:inline-block;width:6px;height:6px;background:#aaa;border-radius:50%;animation:bounce 1.2s infinite;margin:0 2px}
+.typing-dots span:nth-child(2){animation-delay:.2s}
+.typing-dots span:nth-child(3){animation-delay:.4s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
+/* Pulse ring for user marker on map */
+.pulse-ring{animation:pulse-ring 1.8s ease-out infinite}
 </style>
 </head>
 <body>
@@ -138,7 +148,7 @@ input{outline:none}
           <div style="position:absolute;right:10px;top:50%;transform:translateY(-50%);opacity:.1;font-size:70px;color:#fff"><i class="fa-solid fa-bicycle"></i></div>
           <div style="padding-left:18px;position:relative;z-index:1">
             <div style="background:rgba(255,255,255,.22);color:#fff;font-size:9px;font-weight:700;padding:3px 8px;border-radius:20px;display:inline-block;margin-bottom:5px">LIMITED</div>
-            <p style="color:#fff;font-size:17px;font-weight:800;margin:0 0 3px">Becak Premium</p>
+            <p style="color:#fff;font-size:17px;font-weight:800;margin:0 0 3px">Becak Kayuh Premium</p>
             <p style="color:rgba(255,255,255,.82);font-size:11px;margin:0 0 9px">Diskon 20% perjalanan pertama!</p>
             <div style="background:#fff;color:#f28c68;font-size:10px;font-weight:700;padding:5px 11px;border-radius:20px;display:inline-block">Klaim Sekarang →</div>
           </div>
@@ -174,7 +184,7 @@ input{outline:none}
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
       <div style="background:#fafafa;border-radius:16px;padding:13px;border:1px solid #f0f0f0;display:flex;align-items:flex-start;gap:11px">
         <div style="width:34px;height:34px;background:#e8faf0;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="fa-solid fa-check" style="color:#22c55e;font-size:13px"></i></div>
-        <div><p style="font-size:12px;font-weight:700;margin:0 0 3px">Pesanan Berhasil!</p><p style="font-size:10px;color:#888;margin:0 0 4px">Becak Motor selesai. Rating driver sekarang.</p><p style="font-size:9px;color:#bbb;margin:0">10 menit lalu</p></div>
+        <div><p style="font-size:12px;font-weight:700;margin:0 0 3px">Pesanan Berhasil!</p><p style="font-size:10px;color:#888;margin:0 0 4px">Becak Kayuh selesai. Rating driver sekarang.</p><p style="font-size:9px;color:#bbb;margin:0">10 menit lalu</p></div>
       </div>
       <div style="background:#fafafa;border-radius:16px;padding:13px;border:1px solid #f0f0f0;display:flex;align-items:flex-start;gap:11px">
         <div style="width:34px;height:34px;background:#fde8d4;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="fa-solid fa-tag" style="color:#f28c68;font-size:13px"></i></div>
@@ -194,7 +204,6 @@ input{outline:none}
       <i class="fa-solid fa-chevron-down" style="color:#ccc;font-size:11px;flex-shrink:0"></i>
     </div>
   </div>
-  <!-- Route info bar (hidden until route loaded) -->
   <div id="map-route-info" style="display:none;padding:6px 18px;background:#fff;flex-shrink:0;z-index:600;position:relative">
     <div class="route-info">
       <i class="fa-solid fa-route" style="color:#f28c68;font-size:13px;flex-shrink:0"></i>
@@ -246,12 +255,11 @@ input{outline:none}
     </div>
     <div style="flex:1">
       <p id="detail-category" style="font-size:9px;letter-spacing:.18em;color:#bbb;font-weight:700;margin:0 0 5px">BECAK TERDEKAT</p>
-      <h2 id="detail-main-name" style="font-size:18px;font-weight:800;margin:0 0 3px">Becak Sepeda</h2>
+      <h2 id="detail-main-name" style="font-size:18px;font-weight:800;margin:0 0 3px">Becak Kayuh</h2>
       <p style="font-size:11px;color:#888;margin:0">⭐ 4.9 · 128 perjalanan selesai</p>
     </div>
     <button onclick="startSimulation()" style="width:38px;height:38px;border:2px solid #1a1a1a;border-radius:50%;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0"><i class="fa-solid fa-arrow-right" style="font-size:13px"></i></button>
   </div>
-  <!-- Route info in detail -->
   <div id="detail-route-info" style="margin:0 18px 10px;display:none">
     <div class="route-info">
       <i class="fa-solid fa-route" style="color:#f28c68;font-size:13px;flex-shrink:0"></i>
@@ -282,8 +290,8 @@ input{outline:none}
     </div>
     <div style="padding:10px 15px">
       <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f8f8f8;align-items:center">
-        <span id="tx-ride-label" style="font-size:12px;color:#555">Tarif Becak Sepeda</span>
-        <span id="tx-ride-price" style="font-size:12px;font-weight:600">Rp 3.000</span>
+        <span id="tx-ride-label" style="font-size:12px;color:#555">Tarif Becak Kayuh</span>
+        <span id="tx-ride-price" style="font-size:12px;font-weight:600">Rp 8.000</span>
       </div>
       <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f8f8f8;align-items:center">
         <span style="font-size:12px;color:#555">Biaya layanan</span>
@@ -291,11 +299,11 @@ input{outline:none}
       </div>
       <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f8f8f8;align-items:center">
         <span style="font-size:12px;color:#22c55e;font-weight:600"><i class="fa-solid fa-tag" style="margin-right:4px"></i>Diskon promo</span>
-        <span style="font-size:12px;font-weight:600;color:#22c55e">– <span id="tx-disc">Rp 300</span></span>
+        <span style="font-size:12px;font-weight:600;color:#22c55e">– <span id="tx-disc">Rp 800</span></span>
       </div>
       <div style="display:flex;justify-content:space-between;padding:9px 0 4px;align-items:center">
         <span style="font-size:13px;font-weight:700">Total</span>
-        <span id="tx-total" style="font-size:14px;font-weight:800;color:#f28c68">Rp 3.200</span>
+        <span id="tx-total" style="font-size:14px;font-weight:800;color:#f28c68">Rp 7.700</span>
       </div>
     </div>
     <div style="padding:8px 15px 13px">
@@ -314,8 +322,8 @@ input{outline:none}
     <div style="cursor:pointer;padding-bottom:11px;margin-bottom:11px;border-bottom:1px solid rgba(0,0,0,.1)" onclick="selectOption(1)">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div>
-          <h3 id="opt1-name" style="font-size:15px;font-weight:800;margin:0 0 3px">Becak Sepeda</h3>
-          <p style="font-size:10px;color:#6b2c00;margin:0"><i class="fa-regular fa-paper-plane" style="margin-right:3px"></i>&gt;3km &nbsp;<i class="fa-solid fa-coins" style="margin-right:3px"></i>Rp <span id="opt1-price">3.000</span>&nbsp;<span style="color:#166534;font-weight:700">⭐ 4.9</span></p>
+          <h3 id="opt1-name" style="font-size:15px;font-weight:800;margin:0 0 3px">Becak Kayuh</h3>
+          <p style="font-size:10px;color:#6b2c00;margin:0"><i class="fa-regular fa-paper-plane" style="margin-right:3px"></i>&gt;3km &nbsp;<i class="fa-solid fa-coins" style="margin-right:3px"></i>Rp <span id="opt1-price">8.000</span>&nbsp;<span style="color:#166534;font-weight:700">⭐ 4.9</span></p>
         </div>
         <div style="width:32px;height:32px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center"><i class="fa-solid fa-arrow-right" style="font-size:12px"></i></div>
       </div>
@@ -323,7 +331,7 @@ input{outline:none}
     <div style="cursor:pointer" onclick="selectOption(2)">
       <div style="display:flex;justify-content:space-between;align-items:center">
         <div>
-          <h3 id="opt2-name" style="font-size:15px;font-weight:800;margin:0 0 3px">Becak Motor</h3>
+          <h3 id="opt2-name" style="font-size:15px;font-weight:800;margin:0 0 3px">Becak Listrik</h3>
           <p style="font-size:10px;color:#6b2c00;margin:0"><i class="fa-regular fa-paper-plane" style="margin-right:3px"></i>&gt;4km &nbsp;<i class="fa-solid fa-coins" style="margin-right:3px"></i>Rp <span id="opt2-price">5.000</span>&nbsp;<span style="color:#166534;font-weight:700">⭐ 4.7</span></p>
         </div>
         <div style="width:32px;height:32px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center"><i class="fa-solid fa-arrow-right" style="font-size:12px"></i></div>
@@ -340,11 +348,19 @@ input{outline:none}
   <div id="sim-status-badge" style="position:absolute;top:48px;right:18px;background:#fff;padding:8px 13px;border-radius:50px;box-shadow:0 2px 12px rgba(0,0,0,.1);border:1.5px solid #f28c68;color:#f28c68;font-size:11px;font-weight:700;display:flex;align-items:center;gap:7px;z-index:1000">
     <div class="ld"></div><span>Mencari Driver...</span>
   </div>
+  <!-- SKIP BUTTON -->
+  <button id="sim-skip-btn" class="skip-btn" onclick="skipSimulation()" style="display:none">
+    <i class="fa-solid fa-forward-fast" style="font-size:11px"></i> Skip Perjalanan
+  </button>
   <div id="sim-leaflet-map"></div>
+  <!-- ETA TICKER -->
+  <div id="sim-eta-ticker" style="position:absolute;bottom:45%;right:14px;background:#fff;padding:7px 13px;border-radius:50px;box-shadow:0 2px 12px rgba(0,0,0,.1);font-size:11px;font-weight:700;color:#1a1a1a;z-index:1000;display:none">
+    <i class="fa-regular fa-clock" style="color:#f28c68;margin-right:5px"></i><span id="eta-countdown">--:--</span>
+  </div>
   <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:22px 22px 0 0;padding:18px;box-shadow:0 -5px 22px rgba(0,0,0,.08);z-index:900;height:44%">
     <div style="width:38px;height:4px;background:#e0e0e0;border-radius:4px;margin:0 auto 12px"></div>
     <div style="width:100%;background:#f0f0f0;border-radius:50px;height:5px;margin-bottom:10px">
-      <div id="sim-progress-bar" style="background:#f28c68;height:5px;border-radius:50px;width:0%;transition:width 3s ease"></div>
+      <div id="sim-progress-bar" style="background:#f28c68;height:5px;border-radius:50px;width:0%;transition:width .5s linear"></div>
     </div>
     <h3 id="sim-main-title" style="font-size:17px;font-weight:700;margin:0 0 2px">Mencari driver terdekat...</h3>
     <p id="sim-eta" style="font-size:11px;color:#888;font-weight:500;margin:0 0 12px">Mohon tunggu sebentar</p>
@@ -354,7 +370,7 @@ input{outline:none}
       </div>
       <div style="flex:1">
         <p style="font-size:14px;font-weight:700;margin:0 0 2px">Mr. Handsome Joe</p>
-        <p id="sim-vehicle-info" style="font-size:10px;color:#888;font-weight:600;margin:0 0 3px">Becak Sepeda · AB 1234 CD</p>
+        <p id="sim-vehicle-info" style="font-size:10px;color:#888;font-weight:600;margin:0 0 3px">Becak Kayuh · AB 1234 CD</p>
         <div style="display:flex;align-items:center;gap:3px"><span style="color:#fbbf24;font-size:10px">★★★★★</span><span style="font-size:9px;color:#bbb">4.9 (128 trip)</span></div>
       </div>
       <div style="display:flex;flex-direction:column;gap:7px">
@@ -363,7 +379,7 @@ input{outline:none}
       </div>
     </div>
   </div>
-  <!-- SUCCESS OVERLAY (fixed reference) -->
+  <!-- SUCCESS OVERLAY -->
   <div id="sim-success-overlay" style="position:absolute;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;opacity:0;pointer-events:none;transition:opacity .5s;z-index:1100">
     <div style="width:74px;height:74px;background:#22c55e;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:14px"><i class="fa-solid fa-check" style="font-size:30px"></i></div>
     <h2 style="font-size:22px;font-weight:800;margin:0 0 5px">Pesanan Selesai!</h2>
@@ -380,19 +396,22 @@ input{outline:none}
     <div style="width:38px;height:38px;border-radius:50%;background:#fde8d4;border:2px solid #f28c68;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="fa-solid fa-user" style="color:#f28c68;font-size:15px"></i></div>
     <div style="flex:1">
       <p style="font-size:14px;font-weight:700;margin:0">Mr. Handsome Joe</p>
-      <p id="chat-vehicle-sub" style="font-size:10px;color:#888;margin:1px 0 0">Becak Sepeda · AB 1234 CD</p>
+      <p id="chat-vehicle-sub" style="font-size:10px;color:#888;margin:1px 0 0">Becak Kayuh · AB 1234 CD</p>
     </div>
     <div style="width:8px;height:8px;background:#22c55e;border-radius:50%"></div>
   </div>
   <div id="chat-messages" style="flex:1;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:9px;background:#f9f9f9">
     <div style="display:flex;justify-content:flex-start"><div class="bd">Halo kak, saya sudah menuju lokasi penjemputan ya! 🙏</div></div>
-    <div style="display:flex;justify-content:flex-start"><div class="bd">Estimasi 3 menit lagi tiba kak</div></div>
+    <div style="display:flex;justify-content:flex-start"><div class="bd">Estimasi 3 menit lagi tiba kak 😊</div></div>
+    <div style="display:flex;justify-content:flex-start"><div class="bd">Tolong standby di titik yang sudah ditentukan ya kak, saya akan datang dari arah utara 🚲</div></div>
   </div>
   <div id="quick-replies" style="padding:9px 18px;background:#fff;border-top:1px solid #f0f0f0;display:flex;gap:7px;overflow-x:auto;flex-shrink:0" class="ns">
     <button class="qrb" onclick="sendQuickReply('Oke, saya tunggu 👍')">Oke tunggu 👍</button>
     <button class="qrb" onclick="sendQuickReply('Saya di depan gerbang ya')">Di depan gerbang</button>
     <button class="qrb" onclick="sendQuickReply('Sudah sampai belum?')">Sudah sampai?</button>
     <button class="qrb" onclick="sendQuickReply('Tolong cepat ya kak 🙏')">Tolong cepat 🙏</button>
+    <button class="qrb" onclick="sendQuickReply('Aman kak, saya di sini')">Saya di sini</button>
+    <button class="qrb" onclick="sendQuickReply('Berapa menit lagi kak?')">Berapa menit lagi?</button>
   </div>
   <div style="padding:9px 16px 20px;background:#fff;display:flex;align-items:center;gap:9px;flex-shrink:0">
     <div style="flex:1;background:#f5f5f5;border-radius:50px;padding:10px 15px;display:flex;align-items:center;gap:8px;border:1.5px solid #ebebeb">
@@ -420,10 +439,10 @@ input{outline:none}
     <div style="display:flex;background:#fff;border-radius:15px;overflow:hidden;border:1px solid #f0f0f0">
       <div style="width:4px;background:#4ade80;flex-shrink:0"></div>
       <div style="padding:13px;flex:1;position:relative">
-        <h3 style="font-size:13px;font-weight:700;margin:0 0 2px">Becak Motor</h3>
+        <h3 style="font-size:13px;font-weight:700;margin:0 0 2px">Becak Kayuh</h3>
         <p style="font-size:10px;color:#bbb;margin:0 0 7px">Minggu, 19/04/2026 · #23242324</p>
         <p style="font-size:10px;color:#666;margin:0 0 2px"><b style="color:#333">Jemput:</b> Ruko Harmoni</p>
-        <p style="font-size:10px;color:#666;margin:0 0 2px"><b style="color:#333">Tujuan:</b> Jl. Pandalungan No 3</p>
+        <p style="font-size:10px;color:#666;margin:0 0 2px"><b style="color:#333">Tujuan:</b> Alun-Alun Utara</p>
         <p style="font-size:10px;color:#666;margin:0 0 2px"><b style="color:#333">Pukul:</b> 10.00 WIB</p>
         <p style="font-size:10px;color:#666;margin:0"><b style="color:#333">Driver:</b> Mr. Handsome Joe</p>
         <p style="position:absolute;top:10px;right:10px;font-size:9px;font-weight:700;color:#ef4444;cursor:pointer;margin:0">Laporkan?</p>
@@ -436,7 +455,7 @@ input{outline:none}
         <h3 style="font-size:13px;font-weight:700;margin:0 0 2px">Andong Reguler</h3>
         <p style="font-size:10px;color:#bbb;margin:0 0 7px">Minggu, 19/04/2026 · #23242325</p>
         <p style="font-size:10px;color:#666;margin:0 0 2px"><b style="color:#333">Jemput:</b> Ruko Harmoni</p>
-        <p style="font-size:10px;color:#666;margin:0 0 2px"><b style="color:#333">Tujuan:</b> Jl. Pandalungan No 3</p>
+        <p style="font-size:10px;color:#666;margin:0 0 2px"><b style="color:#333">Tujuan:</b> Pasar Beringharjo</p>
         <p style="font-size:10px;color:#666;margin:0 0 2px"><b style="color:#333">Pukul:</b> 09.30 WIB</p>
         <p style="font-size:10px;color:#666;margin:0"><b style="color:#333">Driver:</b> —</p>
         <p style="position:absolute;top:10px;right:10px;font-size:9px;font-weight:700;color:#ef4444;cursor:pointer;margin:0">Laporkan?</p>
@@ -446,10 +465,10 @@ input{outline:none}
     <div style="display:flex;background:#fff;border-radius:15px;overflow:hidden;border:1px solid #f0f0f0">
       <div style="width:4px;background:#ef4444;flex-shrink:0"></div>
       <div style="padding:13px;flex:1;position:relative">
-        <h3 style="font-size:13px;font-weight:700;margin:0 0 2px">Becak Sepeda</h3>
+        <h3 style="font-size:13px;font-weight:700;margin:0 0 2px">Becak Listrik</h3>
         <p style="font-size:10px;color:#bbb;margin:0 0 7px">Minggu, 19/04/2026 · #23242326</p>
         <p style="font-size:10px;color:#666;margin:0 0 2px"><b style="color:#333">Jemput:</b> Ruko Harmoni</p>
-        <p style="font-size:10px;color:#666;margin:0 0 2px"><b style="color:#333">Tujuan:</b> Jl. Pandalungan No 3</p>
+        <p style="font-size:10px;color:#666;margin:0 0 2px"><b style="color:#333">Tujuan:</b> Malioboro</p>
         <p style="font-size:10px;color:#666;margin:0 0 2px"><b style="color:#333">Pukul:</b> 08.15 WIB</p>
         <p style="font-size:10px;color:#666;margin:0"><b style="color:#333">Driver:</b> —</p>
         <p style="position:absolute;top:10px;right:10px;font-size:9px;font-weight:700;color:#ef4444;cursor:pointer;margin:0">Laporkan?</p>
@@ -474,8 +493,8 @@ input{outline:none}
       <span style="background:rgba(242,140,104,.2);color:#f28c68;font-size:10px;font-weight:700;padding:4px 11px;border-radius:20px">PREMIUM</span>
       <span style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);font-size:10px;font-weight:700;padding:4px 11px;border-radius:20px">EXCLUSIVE</span>
     </div>
-    <h2 style="font-size:25px;font-weight:800;margin:0 0 9px;line-height:1.2">Becak Premium.<br><span style="color:#f28c68">Enjoy the luxury.</span></h2>
-    <p style="font-size:13px;color:#777;margin:0 0 22px;line-height:1.7">Nikmati perjalanan eksklusif dengan armada premium, driver profesional, dan harga terjangkau.</p>
+    <h2 style="font-size:25px;font-weight:800;margin:0 0 9px;line-height:1.2">Becak Kayuh Premium.<br><span style="color:#f28c68">Rasakan pengalaman autentik.</span></h2>
+    <p style="font-size:13px;color:#777;margin:0 0 22px;line-height:1.7">Nikmati perjalanan eksklusif dengan becak kayuh tradisional, driver berpengalaman, dan harga terjangkau.</p>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:22px">
       <div style="background:rgba(255,255,255,.05);border-radius:14px;padding:13px;text-align:center"><p style="font-size:19px;font-weight:800;color:#f28c68;margin:0 0 3px">20%</p><p style="font-size:9px;color:#666;margin:0">Diskon</p></div>
       <div style="background:rgba(255,255,255,.05);border-radius:14px;padding:13px;text-align:center"><p style="font-size:19px;font-weight:800;color:#f28c68;margin:0 0 3px">24/7</p><p style="font-size:9px;color:#666;margin:0">Layanan</p></div>
@@ -546,7 +565,7 @@ input{outline:none}
     </div>
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h3 style="font-size:14px;font-weight:700;margin:0">Driver Terdekat</h3><i class="fa-solid fa-chevron-right" style="color:#ccc;font-size:11px;cursor:pointer"></i></div>
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
-      <div style="display:flex;align-items:center;gap:11px;background:#fff;border-radius:14px;padding:12px;border:1px solid #f0f0f0;cursor:pointer" onclick="goToMap('Becak')"><div style="width:40px;height:40px;border-radius:50%;background:#fde8d4;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="fa-solid fa-bicycle" style="color:#f28c68;font-size:16px"></i></div><div style="flex:1"><p style="font-size:12px;font-weight:700;margin:0 0 2px">Budi Santoso</p><p style="font-size:10px;color:#888;margin:0">Becak Sepeda · <span style="color:#22c55e;font-weight:600">● 300m</span></p></div><div style="text-align:right"><p style="font-size:12px;font-weight:700;color:#f28c68;margin:0">★ 4.9</p><p style="font-size:9px;color:#bbb;margin:2px 0 0">~1 mnt</p></div></div>
+      <div style="display:flex;align-items:center;gap:11px;background:#fff;border-radius:14px;padding:12px;border:1px solid #f0f0f0;cursor:pointer" onclick="goToMap('Becak')"><div style="width:40px;height:40px;border-radius:50%;background:#fde8d4;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="fa-solid fa-bicycle" style="color:#f28c68;font-size:16px"></i></div><div style="flex:1"><p style="font-size:12px;font-weight:700;margin:0 0 2px">Budi Santoso</p><p style="font-size:10px;color:#888;margin:0">Becak Kayuh · <span style="color:#22c55e;font-weight:600">● 300m</span></p></div><div style="text-align:right"><p style="font-size:12px;font-weight:700;color:#f28c68;margin:0">★ 4.9</p><p style="font-size:9px;color:#bbb;margin:2px 0 0">~1 mnt</p></div></div>
       <div style="display:flex;align-items:center;gap:11px;background:#fff;border-radius:14px;padding:12px;border:1px solid #f0f0f0;cursor:pointer" onclick="goToMap('Andong')"><div style="width:40px;height:40px;border-radius:50%;background:#fde8d4;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="fa-solid fa-horse" style="color:#f28c68;font-size:16px"></i></div><div style="flex:1"><p style="font-size:12px;font-weight:700;margin:0 0 2px">Agus Purnomo</p><p style="font-size:10px;color:#888;margin:0">Andong Reguler · <span style="color:#eab308;font-weight:600">● 650m</span></p></div><div style="text-align:right"><p style="font-size:12px;font-weight:700;color:#f28c68;margin:0">★ 4.7</p><p style="font-size:9px;color:#bbb;margin:2px 0 0">~3 mnt</p></div></div>
     </div>
   </div>
@@ -563,7 +582,7 @@ input{outline:none}
       <div style="position:absolute;right:-14px;top:-14px;width:70px;height:70px;background:rgba(255,255,255,.14);border-radius:50%"></div>
       <div style="position:relative;z-index:1">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:9px"><div style="width:7px;height:7px;background:#22c55e;border-radius:50%"></div><p style="font-size:10px;font-weight:700;color:#166534;margin:0">PESANAN AKTIF</p></div>
-        <h3 style="font-size:17px;font-weight:800;margin:0 0 3px">Becak Motor</h3>
+        <h3 style="font-size:17px;font-weight:800;margin:0 0 3px">Becak Kayuh</h3>
         <p style="font-size:11px;color:#6b2c00;margin:0 0 13px">Driver: Mr. Handsome Joe · ~3 mnt lagi</p>
         <div style="display:flex;gap:7px">
           <button onclick="startSimulation()" style="flex:1;padding:10px;background:#1a1a1a;color:#fff;border:none;border-radius:50px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit"><i class="fa-solid fa-map-location-dot" style="margin-right:4px"></i>Lacak Perjalanan</button>
@@ -573,10 +592,10 @@ input{outline:none}
     </div>
     <div style="background:#fff;border-radius:18px;padding:14px;margin-bottom:12px;border:1px solid #f0f0f0">
       <h3 style="font-size:13px;font-weight:700;margin:0 0 12px;display:flex;align-items:center;gap:7px"><i class="fa-solid fa-receipt" style="color:#f28c68"></i>Ringkasan Pesanan</h3>
-      <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f8f8f8;align-items:flex-start"><div><p style="font-size:12px;font-weight:600;margin:0">Becak Motor</p><p style="font-size:10px;color:#888;margin:2px 0 0">Ruko Harmoni → Jl. Pandalungan</p></div><p style="font-size:12px;font-weight:700;margin:0">Rp 5.000</p></div>
+      <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f8f8f8;align-items:flex-start"><div><p style="font-size:12px;font-weight:600;margin:0">Becak Kayuh</p><p style="font-size:10px;color:#888;margin:2px 0 0">Ruko Harmoni → Alun-Alun Utara</p></div><p style="font-size:12px;font-weight:700;margin:0">Rp 8.000</p></div>
       <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f8f8f8;align-items:center"><p style="font-size:12px;color:#666;margin:0">Biaya layanan</p><p style="font-size:12px;font-weight:600;margin:0">Rp 500</p></div>
       <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #f8f8f8;align-items:center"><p style="font-size:12px;color:#22c55e;font-weight:600;margin:0"><i class="fa-solid fa-tag" style="margin-right:4px"></i>Diskon promo</p><p style="font-size:12px;font-weight:600;color:#22c55e;margin:0">– Rp 1.000</p></div>
-      <div style="display:flex;justify-content:space-between;padding:9px 0 0;align-items:center"><p style="font-size:14px;font-weight:700;margin:0">Total</p><p style="font-size:15px;font-weight:800;color:#f28c68;margin:0">Rp 4.500</p></div>
+      <div style="display:flex;justify-content:space-between;padding:9px 0 0;align-items:center"><p style="font-size:14px;font-weight:700;margin:0">Total</p><p style="font-size:15px;font-weight:800;color:#f28c68;margin:0">Rp 7.500</p></div>
     </div>
     <div style="background:#fff;border-radius:18px;padding:14px;border:1px solid #f0f0f0">
       <h3 style="font-size:13px;font-weight:700;margin:0 0 10px;display:flex;align-items:center;gap:7px"><i class="fa-solid fa-tag" style="color:#f28c68"></i>Kode Promo</h3>
@@ -600,11 +619,14 @@ input{outline:none}
 
 <script>
 // ═══ STATE ═══
-let activeVehicle='Becak', currentMainType='Becak Sepeda', selectedDest=null;
+let activeVehicle='Becak', currentMainType='Becak Kayuh', selectedDest=null;
 let mapScreenMap=null, mapDriverLayer=null, mapRouteLine=null;
-let simMap=null, simDriverMkr=null, simUserMkr=null, simDestMkr=null, simRoutePts=null;
+let simMap=null, simDriverMkr=null, simUserMkr=null, simDestMkr=null;
 let animRafId=null, exploreMap=null, detailMiniMap=null;
-let currentRouteData=null; // stores OSRM response
+let currentRouteData=null;
+let simSkipRequested=false, simPhase=1;
+let etaIntervalId=null, etaEndTime=0;
+let simProgressInterval=null;
 
 const COORDS={
   driverStart:[-7.7870,110.3790],
@@ -627,35 +649,99 @@ const DESTINATIONS=[
   {name:'Bandara Adisucipto',addr:'Jl. Solo, Maguwoharjo, Sleman',dist:'8.2 km',icon:'fa-plane',lat:-7.7881,lng:110.4317},
 ];
 
+// ═══ VEHICLE DATA — Becak Kayuh (mahal) & Becak Listrik (murah) ═══
 const VEHICLE_DATA={
-  Becak:{title:'Becak',img:'https://ckjwipxaftcqxtyskgxd.supabase.co/storage/v1/object/public/cdn-files/5c369a3c-3675-4fd1-9081-c9f421814afc/1776603095129-d8x50yc4yy.png',category:'BECAK TERDEKAT',mainName:'Becak Sepeda',optTitle:'Pilihan Becak lain yang tersedia',
-    opts:[{name:'Becak Sepeda',dist:'>3km',price:'3.000',rating:'4.9',base:3000},{name:'Becak Motor',dist:'>4km',price:'5.000',rating:'4.7',base:5000}]},
-  Andong:{title:'Andong',img:'https://ckjwipxaftcqxtyskgxd.supabase.co/storage/v1/object/public/cdn-files/5c369a3c-3675-4fd1-9081-c9f421814afc/1776605653889-oo2q41s2vc.png',category:'ANDONG TERDEKAT',mainName:'Andong Reguler',optTitle:'Pilihan Andong lain yang tersedia',
-    opts:[{name:'Andong Reguler',dist:'>3km',price:'10.000',rating:'4.8',base:10000},{name:'Andong Exclusive',dist:'>5km',price:'16.000',rating:'4.9',base:16000}]}
+  Becak:{
+    title:'Becak',
+    img:'https://ckjwipxaftcqxtyskgxd.supabase.co/storage/v1/object/public/cdn-files/5c369a3c-3675-4fd1-9081-c9f421814afc/1776603095129-d8x50yc4yy.png',
+    category:'BECAK TERDEKAT',
+    mainName:'Becak Kayuh',
+    optTitle:'Pilihan Becak lain yang tersedia',
+    opts:[
+      {name:'Becak Kayuh',  dist:'>3km', price:'8.000', rating:'4.9', base:8000},
+      {name:'Becak Listrik', dist:'>4km', price:'5.000', rating:'4.8', base:5000}
+    ]
+  },
+  Andong:{
+    title:'Andong',
+    img:'https://ckjwipxaftcqxtyskgxd.supabase.co/storage/v1/object/public/cdn-files/5c369a3c-3675-4fd1-9081-c9f421814afc/1776605653889-oo2q41s2vc.png',
+    category:'ANDONG TERDEKAT',
+    mainName:'Andong Reguler',
+    optTitle:'Pilihan Andong lain yang tersedia',
+    opts:[
+      {name:'Andong Reguler',  dist:'>3km', price:'10.000', rating:'4.8', base:10000},
+      {name:'Andong Exclusive', dist:'>5km', price:'16.000', rating:'4.9', base:16000}
+    ]
+  }
 };
+
+// ═══ CHAT RESPONSES — lebih banyak variasi ═══
+const DRIVER_RESPONSES_GENERIC=[
+  'Siap kak! 👍',
+  'Baik kak, saya segera menuju lokasi 🙏',
+  'Oke kak, mohon ditunggu sebentar ya 😊',
+  'Sudah saya catat kak, terima kasih!',
+  'Tenang kak, saya jaga keselamatan perjalanan 🙏',
+  'Noted kak! Saya melaju sekarang 🚲',
+  'Baik kak, saya sudah lihat lokasi Anda di peta 📍',
+  'Siap kak, sebentar lagi saya tiba 😄',
+  'Terima kasih infonya kak! Saya sudah di jalan.',
+  'Oke kak, insya Allah saya datang tepat waktu 🙏',
+];
+
+const DRIVER_RESPONSES_SPECIFIC = {
+  'Sudah sampai belum?': [
+    'Hampir sampai kak, sekitar 1-2 menit lagi 😊',
+    'Bentar lagi kak, saya sudah dekat nih tinggal belok kiri!',
+    'Maaf kak ada macet sedikit, 3 menit lagi ya 🙏',
+  ],
+  'Tolong cepat ya kak 🙏': [
+    'Siap kak, saya gas sekarang! 🚲💨',
+    'Baik kak, saya usahakan secepat mungkin ya 🙏',
+    'Sudah saya percepat kak, hampir sampai!',
+  ],
+  'Saya di depan gerbang ya': [
+    'Siap kak, saya cari gerbangnya ya! 🙏',
+    'Oke kak, saya menuju ke sana sekarang!',
+    'Baik kak, terlihat di peta, sebentar lagi tiba 📍',
+  ],
+  'Berapa menit lagi kak?': [
+    'Sekitar 2 menit lagi kak, sabar ya 😊',
+    'Masih 3-4 menit kak, jalan agak ramai 🙏',
+    'Sudah dekat kak, kurang dari 2 menit insya Allah!',
+  ],
+  'Saya di depan gerbang ya': [
+    'Siap kak, saya arahkan ke sana!',
+    'Oke kak, terlihat di peta, sebentar lagi 📍',
+    'Baik kak, segera tiba!',
+  ],
+};
+
+function getDriverResponse(msg) {
+  for(const key of Object.keys(DRIVER_RESPONSES_SPECIFIC)){
+    if(msg.includes(key.slice(0,10))) {
+      const arr = DRIVER_RESPONSES_SPECIFIC[key];
+      return arr[Math.floor(Math.random()*arr.length)];
+    }
+  }
+  return DRIVER_RESPONSES_GENERIC[Math.floor(Math.random()*DRIVER_RESPONSES_GENERIC.length)];
+}
 
 // ═══ OSRM ROUTING ═══
 async function fetchOSRMRoute(from, to) {
-  // from/to: [lat, lng]
-  const url = `https://router.project-osrm.org/route/v1/driving/${from[1]},${from[0]};${to[1]},${to[0]}?overview=full&geometries=geojson`;
+  const url=`https://router.project-osrm.org/route/v1/driving/${from[1]},${from[0]};${to[1]},${to[0]}?overview=full&geometries=geojson`;
   try {
-    const res = await fetch(url);
-    const data = await res.json();
-    if (data.routes && data.routes.length > 0) {
-      const route = data.routes[0];
-      // convert GeoJSON [lng,lat] → Leaflet [lat,lng]
-      const pts = route.geometry.coordinates.map(c => [c[1], c[0]]);
-      const distKm = (route.distance / 1000).toFixed(1);
-      const durMin = Math.round(route.duration / 60);
-      return { pts, distKm, durMin };
+    const res=await fetch(url);
+    const data=await res.json();
+    if(data.routes&&data.routes.length>0){
+      const route=data.routes[0];
+      const pts=route.geometry.coordinates.map(c=>[c[1],c[0]]);
+      const distKm=(route.distance/1000).toFixed(1);
+      const durMin=Math.ceil(route.duration/60);
+      return {pts,distKm,durMin};
     }
-  } catch(e) {}
+  }catch(e){}
   return null;
-}
-
-function fmtRouteInfo(data) {
-  if (!data) return 'Rute tidak tersedia';
-  return `${data.distKm} km · ±${data.durMin} menit`;
 }
 
 // ═══ NAV ═══
@@ -663,12 +749,12 @@ function navTo(id){
   document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   ['nav-home','nav-explore','nav-cart','nav-history','nav-profile'].forEach(b=>{
-    const el=document.getElementById(b); if(el) el.style.color='#ccc';
+    const el=document.getElementById(b);if(el)el.style.color='#ccc';
   });
   const m={'home-screen':'nav-home','explore-screen':'nav-explore','cart-screen':'nav-cart','history-screen':'nav-history','profile-screen':'nav-profile'};
   if(m[id]){const b=document.getElementById(m[id]);if(b)b.style.color='#f28c68';}
   if(id==='explore-screen') setTimeout(initExploreMap,80);
-  if(id==='detail-screen') { detailMiniMap=null; setTimeout(initDetailMiniMap,80); }
+  if(id==='detail-screen'){detailMiniMap=null;setTimeout(initDetailMiniMap,80);}
 }
 
 // ═══ DEST SEARCH ═══
@@ -680,10 +766,10 @@ function openDestSearch(){
     renderDest(DESTINATIONS);
   },50);
 }
-function closeDestSearch(){ document.getElementById('dest-overlay').classList.remove('show'); }
+function closeDestSearch(){document.getElementById('dest-overlay').classList.remove('show');}
 function filterDest(q){
   q=q.toLowerCase().trim();
-  renderDest(q ? DESTINATIONS.filter(d=>d.name.toLowerCase().includes(q)||d.addr.toLowerCase().includes(q)) : DESTINATIONS);
+  renderDest(q?DESTINATIONS.filter(d=>d.name.toLowerCase().includes(q)||d.addr.toLowerCase().includes(q)):DESTINATIONS);
 }
 function renderDest(list){
   const c=document.getElementById('dest-results');
@@ -720,12 +806,10 @@ async function selectDest(name,addr,dist,lat,lng){
   } else {
     if(active&&active.id==='map-screen') setTimeout(()=>initMapScreenLeaflet(true),80);
   }
-
-  // Fetch route in background
   fetchRouteAndUpdate(lat,lng);
 }
 
-async function fetchRouteAndUpdate(lat,lng) {
+async function fetchRouteAndUpdate(lat,lng){
   const routeInfoEl=document.getElementById('map-route-info');
   const routeTextEl=document.getElementById('map-route-text');
   const routeLoaderEl=document.getElementById('map-route-loader');
@@ -733,26 +817,24 @@ async function fetchRouteAndUpdate(lat,lng) {
   if(routeTextEl) routeTextEl.textContent='Menghitung rute...';
   if(routeLoaderEl) routeLoaderEl.style.display='block';
 
-  const data = await fetchOSRMRoute(COORDS.userPickup, [lat,lng]);
-  currentRouteData = data;
+  const data=await fetchOSRMRoute(COORDS.userPickup,[lat,lng]);
+  currentRouteData=data;
 
-  const txt = data ? `${data.distKm} km · ±${data.durMin} menit perjalanan` : 'Rute tidak tersedia';
+  const txt=data?`${data.distKm} km · ±${data.durMin} menit perjalanan`:'Rute tidak tersedia';
   if(routeTextEl) routeTextEl.textContent=txt;
   if(routeLoaderEl) routeLoaderEl.style.display='none';
 
-  // Update detail screen route info
   const dri=document.getElementById('detail-route-info');
   const drt=document.getElementById('detail-route-text');
   if(dri) dri.style.display=data?'block':'none';
   if(drt) drt.textContent=txt;
 
-  // Draw route on map if map already open
-  if(mapScreenMap && data) drawMapRoute(data.pts);
+  if(mapScreenMap&&data) drawMapRoute(data.pts);
 }
 
-function drawMapRoute(pts) {
-  if(mapRouteLine){ mapScreenMap.removeLayer(mapRouteLine); mapRouteLine=null; }
-  mapRouteLine = L.polyline(pts, {color:'#f28c68',weight:4,opacity:.85}).addTo(mapScreenMap);
+function drawMapRoute(pts){
+  if(mapRouteLine){mapScreenMap.removeLayer(mapRouteLine);mapRouteLine=null;}
+  mapRouteLine=L.polyline(pts,{color:'#f28c68',weight:4,opacity:.85}).addTo(mapScreenMap);
   const dp=[selectedDest.lat,selectedDest.lng];
   mapScreenMap.fitBounds([COORDS.userPickup,dp],{padding:[60,50]});
 }
@@ -770,16 +852,14 @@ function mkDestIcon(){
 }
 
 // ═══ MAP SCREEN ═══
-function goToMap(type){ updateMapVehicle(type); navTo('map-screen'); setTimeout(()=>initMapScreenLeaflet(false),80); }
+function goToMap(type){updateMapVehicle(type);navTo('map-screen');setTimeout(()=>initMapScreenLeaflet(false),80);}
 
 function initMapScreenLeaflet(reDraw){
   const el=document.getElementById('map-leaflet');if(!el)return;
   if(!mapScreenMap){
     mapScreenMap=L.map(el,{zoomControl:false,attributionControl:true,dragging:true,touchZoom:true,scrollWheelZoom:false,doubleClickZoom:false}).setView(COORDS.userPickup,15);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© <a href="https://openstreetmap.org">OSM</a>'}).addTo(mapScreenMap);
-    // User marker
-    L.circleMarker(COORDS.userPickup,{radius:9,fillColor:'#3b82f6',color:'#fff',weight:3,fillOpacity:1}).addTo(mapScreenMap)
-      .bindPopup('<b>Posisi Anda</b>');
+    L.circleMarker(COORDS.userPickup,{radius:9,fillColor:'#3b82f6',color:'#fff',weight:3,fillOpacity:1}).addTo(mapScreenMap).bindPopup('<b>Posisi Anda</b>');
     mapDriverLayer=L.layerGroup().addTo(mapScreenMap);
   }
   mapScreenMap.invalidateSize();
@@ -787,14 +867,13 @@ function initMapScreenLeaflet(reDraw){
 
   if(selectedDest){
     const dp=[selectedDest.lat,selectedDest.lng];
-    // Dest marker
     if(!mapScreenMap._destMkr){
       mapScreenMap._destMkr=L.marker(dp,{icon:mkDestIcon()}).addTo(mapScreenMap).bindPopup('<b>'+selectedDest.name+'</b>');
     } else {
       mapScreenMap._destMkr.setLatLng(dp).getPopup().setContent('<b>'+selectedDest.name+'</b>');
     }
-    if(currentRouteData) { drawMapRoute(currentRouteData.pts); }
-    else { mapScreenMap.fitBounds([COORDS.userPickup,dp],{padding:[60,50]}); }
+    if(currentRouteData) drawMapRoute(currentRouteData.pts);
+    else mapScreenMap.fitBounds([COORDS.userPickup,dp],{padding:[60,50]});
   }
 }
 
@@ -852,13 +931,13 @@ function updateTxDetail(idx){
   const et=document.getElementById('tx-total');if(et)et.textContent='Rp '+total.toLocaleString('id-ID');
 }
 
-function goToDetail(){ navTo('detail-screen'); }
+function goToDetail(){navTo('detail-screen');}
 
-// ═══ MINI MAPS (always re-init when entering detail) ═══
+// ═══ MINI MAP ═══
 async function initDetailMiniMap(){
   const el=document.getElementById('detail-mini-map');
   if(!el) return;
-  if(detailMiniMap){ detailMiniMap.remove(); detailMiniMap=null; }
+  if(detailMiniMap){detailMiniMap.remove();detailMiniMap=null;}
 
   const dp=selectedDest?[selectedDest.lat,selectedDest.lng]:COORDS.destination;
   const center=[(COORDS.userPickup[0]+dp[0])/2,(COORDS.userPickup[1]+dp[1])/2];
@@ -867,19 +946,16 @@ async function initDetailMiniMap(){
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(detailMiniMap);
   L.circleMarker(COORDS.userPickup,{radius:6,fillColor:'#3b82f6',color:'#fff',weight:2,fillOpacity:1}).addTo(detailMiniMap);
   L.circleMarker(dp,{radius:6,fillColor:'#ef4444',color:'#fff',weight:2,fillOpacity:1}).addTo(detailMiniMap);
-
   detailMiniMap.invalidateSize();
 
-  // Use cached route or fetch
   if(currentRouteData){
     L.polyline(currentRouteData.pts,{color:'#f28c68',weight:3,opacity:.85}).addTo(detailMiniMap);
     detailMiniMap.fitBounds([COORDS.userPickup,dp],{padding:[18,18]});
   } else {
-    // Draw straight line fallback first, then replace with real route
     const fallback=L.polyline([COORDS.userPickup,dp],{color:'#f28c68',weight:2,dashArray:'5 4',opacity:.7}).addTo(detailMiniMap);
     detailMiniMap.fitBounds([COORDS.userPickup,dp],{padding:[18,18]});
     const rd=await fetchOSRMRoute(COORDS.userPickup,dp);
-    if(rd && detailMiniMap){
+    if(rd&&detailMiniMap){
       detailMiniMap.removeLayer(fallback);
       L.polyline(rd.pts,{color:'#f28c68',weight:3,opacity:.85}).addTo(detailMiniMap);
       currentRouteData=rd;
@@ -898,11 +974,50 @@ function initExploreMap(){
   exploreMap.invalidateSize();
 }
 
-// ═══ SIMULATION WITH REAL ROUTE ═══
+// ═══ ETA COUNTDOWN ═══
+function startEtaCountdown(durationMs) {
+  clearInterval(etaIntervalId);
+  const ticker=document.getElementById('sim-eta-ticker');
+  const countdown=document.getElementById('eta-countdown');
+  if(!ticker||!countdown) return;
+  ticker.style.display='flex';
+  etaEndTime=Date.now()+durationMs;
+  function tick(){
+    const rem=Math.max(0,etaEndTime-Date.now());
+    const m=Math.floor(rem/60000);
+    const s=Math.floor((rem%60000)/1000);
+    countdown.textContent=`${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+    if(rem<=0) clearInterval(etaIntervalId);
+  }
+  tick();
+  etaIntervalId=setInterval(tick,1000);
+}
+function stopEtaCountdown(){
+  clearInterval(etaIntervalId);
+  const ticker=document.getElementById('sim-eta-ticker');
+  if(ticker) ticker.style.display='none';
+}
+
+// ═══ PROGRESS BAR (smooth real-time) ═══
+function startProgressBar(fromPct,toPct,durationMs,id){
+  clearInterval(simProgressInterval);
+  const bar=document.getElementById('sim-progress-bar');
+  if(!bar) return;
+  bar.style.transition='none';
+  bar.style.width=fromPct+'%';
+  const start=Date.now();
+  const range=toPct-fromPct;
+  simProgressInterval=setInterval(()=>{
+    const t=Math.min((Date.now()-start)/durationMs,1);
+    bar.style.width=(fromPct+range*t)+'%';
+    if(t>=1) clearInterval(simProgressInterval);
+  },200);
+}
+
+// ═══ ANIMATION ALONG ROUTE ═══
 function animMkrAlongRoute(mkr, routePts, durationMs, onProgress, onDone){
   if(animRafId) cancelAnimationFrame(animRafId);
-  if(!routePts||routePts.length<2){ if(onDone)onDone(); return; }
-  // pre-compute cumulative distances
+  if(!routePts||routePts.length<2){if(onDone)onDone();return;}
   const segs=[];let total=0;
   for(let i=1;i<routePts.length;i++){
     const d=Math.hypot(routePts[i][0]-routePts[i-1][0],routePts[i][1]-routePts[i-1][1]);
@@ -910,28 +1025,67 @@ function animMkrAlongRoute(mkr, routePts, durationMs, onProgress, onDone){
   }
   const start=performance.now();
   function step(now){
+    if(simSkipRequested){if(onDone)onDone();return;}
     const t=Math.min((now-start)/durationMs,1);
     const ease=t<.5?2*t*t:-1+(4-2*t)*t;
     const target=ease*total;
     let seg=0;
-    for(let i=0;i<segs.length;i++){ if(segs[i].cum>=target){seg=i;break;} }
+    for(let i=0;i<segs.length;i++){if(segs[i].cum>=target){seg=i;break;}}
     const prev=seg>0?segs[seg-1].cum:0;
     const frac=segs[seg].d>0?(target-prev)/segs[seg].d:0;
     const a=routePts[seg],b=routePts[seg+1]||routePts[seg];
     mkr.setLatLng([a[0]+(b[0]-a[0])*frac,a[1]+(b[1]-a[1])*frac]);
-    if(onProgress) onProgress(t);
+    if(onProgress)onProgress(t);
     if(t<1) animRafId=requestAnimationFrame(step);
-    else if(onDone) onDone();
+    else if(onDone)onDone();
   }
   animRafId=requestAnimationFrame(step);
 }
 
+// ═══ SKIP SIMULATION ═══
+function skipSimulation(){
+  simSkipRequested=true;
+  clearInterval(simProgressInterval);
+  clearInterval(etaIntervalId);
+  const bar=document.getElementById('sim-progress-bar');
+  if(bar){bar.style.transition='width .4s';bar.style.width='100%';}
+  completeSimulation();
+}
+
+function completeSimulation(){
+  clearInterval(simProgressInterval);
+  stopEtaCountdown();
+  const badge=document.getElementById('sim-status-badge');
+  if(badge) badge.innerHTML='<i class="fa-solid fa-check" style="color:#f28c68"></i><span style="font-weight:700;color:#f28c68">Tiba!</span>';
+
+  const skipBtn=document.getElementById('sim-skip-btn');
+  if(skipBtn) skipBtn.style.display='none';
+
+  const dp=selectedDest?[selectedDest.lat,selectedDest.lng]:COORDS.destination;
+  if(simDriverMkr) simDriverMkr.setLatLng(dp);
+  if(simMap) simMap.flyTo(dp,16,{duration:1});
+
+  setTimeout(()=>{
+    const overlay=document.getElementById('sim-success-overlay');
+    if(overlay){overlay.style.opacity='1';overlay.style.pointerEvents='auto';}
+    setTimeout(()=>{
+      addToHistory(currentMainType);
+      navTo('history-screen');
+      if(badge) badge.innerHTML='<div class="ld"></div><span>Mencari Driver...</span>';
+    },2500);
+  },600);
+}
+
+// ═══ SIMULATION WITH REAL ROUTE & REAL TIME ═══
 function startSimulation(){
   navTo('sim-screen');
+  simSkipRequested=false;
+
   const badge=document.getElementById('sim-status-badge');
   const title=document.getElementById('sim-main-title');
   const eta=document.getElementById('sim-eta');
-  const overlay=document.getElementById('sim-success-overlay'); // FIXED: correct ID
+  const overlay=document.getElementById('sim-success-overlay');
+  const skipBtn=document.getElementById('sim-skip-btn');
   const bar=document.getElementById('sim-progress-bar');
 
   document.getElementById('sim-vehicle-info').textContent=currentMainType+' · AB 1234 CD';
@@ -939,13 +1093,15 @@ function startSimulation(){
 
   overlay.style.opacity='0';
   overlay.style.pointerEvents='none';
-  bar.style.transition='none';
-  bar.style.width='0%';
+  clearInterval(simProgressInterval);
+  bar.style.transition='none'; bar.style.width='0%';
   badge.innerHTML='<div class="ld"></div><span>Mencari Driver...</span>';
   title.textContent='Mencari driver terdekat...';
   eta.textContent='Mohon tunggu sebentar';
+  skipBtn.style.display='none';
+  stopEtaCountdown();
 
-  setTimeout(async ()=>{
+  setTimeout(async()=>{
     if(simMap){simMap.remove();simMap=null;}
     const mel=document.getElementById('sim-leaflet-map');
     const dp=selectedDest?[selectedDest.lat,selectedDest.lng]:COORDS.destination;
@@ -954,12 +1110,12 @@ function startSimulation(){
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OSM'}).addTo(simMap);
 
     simUserMkr=L.marker(COORDS.userPickup,{icon:mkUserIcon()}).addTo(simMap).bindPopup('Lokasi Jemput');
-    simDestMkr=L.marker(dp,{icon:mkDestIcon(),opacity:0}).addTo(simMap).bindPopup('Tujuan');
+    simDestMkr=L.marker(dp,{icon:mkDestIcon(),opacity:0}).addTo(simMap).bindPopup(selectedDest?selectedDest.name:'Tujuan');
     simDriverMkr=L.marker(COORDS.driverStart,{icon:mkDriverIcon(activeVehicle)}).addTo(simMap);
     simMap.invalidateSize();
 
-    // Fetch TWO routes: driver→pickup and pickup→destination
     badge.innerHTML='<div class="ld"></div><span>Menghitung Rute...</span>';
+
     const [r1,r2]=await Promise.all([
       fetchOSRMRoute(COORDS.driverStart,COORDS.userPickup),
       fetchOSRMRoute(COORDS.userPickup,dp)
@@ -968,58 +1124,103 @@ function startSimulation(){
     const route1=r1?r1.pts:[COORDS.driverStart,COORDS.userPickup];
     const route2=r2?r2.pts:[COORDS.userPickup,dp];
 
-    // Draw route 2 (pickup→dest) as guide line
+    // Real-time durations (ms). Minimum 8s each for visual clarity.
+    const dur1=r1?Math.max(r1.durMin*60000, 8000):10000;
+    const dur2=r2?Math.max(r2.durMin*60000, 8000):15000;
+
+    // Draw destination route guide
     L.polyline(route2,{color:'#f28c68',weight:3,dashArray:'7 4',opacity:.55}).addTo(simMap);
 
+    // Driver → pickup route line
+    const phaseLine1=L.polyline(route1,{color:'#3b82f6',weight:3,opacity:.4}).addTo(simMap);
+
     setTimeout(()=>{
+      if(simSkipRequested) return;
       badge.innerHTML='<div class="ld"></div><span>Driver Menuju Lokasi...</span>';
       title.textContent='Driver menuju lokasi penjemputan';
-      eta.textContent='⏱ Estimasi tiba: 2 Menit';
-      simMap.flyTo(COORDS.driverStart,14,{duration:1.2});
-      bar.style.transition='width 3.5s ease'; bar.style.width='40%';
+      const etaMin1=r1?r1.durMin:Math.round(dur1/60000);
+      eta.textContent=`⏱ Estimasi tiba: ${etaMin1} Menit`;
+      skipBtn.style.display='flex';
+      simMap.fitBounds([COORDS.driverStart,COORDS.userPickup],{padding:[50,50],duration:1.2});
+      startProgressBar(0,45,dur1);
+      startEtaCountdown(dur1);
+      simPhase=1;
 
-      animMkrAlongRoute(simDriverMkr, route1, 3500, null, ()=>{
+      animMkrAlongRoute(simDriverMkr, route1, dur1, null, ()=>{
+        if(simSkipRequested) return;
+        stopEtaCountdown();
+        simMap.removeLayer(phaseLine1);
+
         badge.innerHTML='<div style="width:8px;height:8px;border-radius:50%;background:#f28c68;flex-shrink:0"></div><span>Dalam Perjalanan...</span>';
         title.textContent='Dalam perjalanan ke tujuan';
-        eta.textContent='⏱ Estimasi tiba: 5 Menit';
+        const etaMin2=r2?r2.durMin:Math.round(dur2/60000);
+        eta.textContent=`⏱ Estimasi tiba: ${etaMin2} Menit`;
         simUserMkr.setOpacity(.3);
         simDestMkr.setOpacity(1);
+        startProgressBar(45,95,dur2);
+        startEtaCountdown(dur2);
+        simPhase=2;
+
+        // Auto-chat: driver arrived at pickup
+        autoDriverChat('Saya sudah di lokasi penjemputan kak, silakan naik! 🙏');
+
         simMap.flyTo(dp,14,{duration:1.5});
-        bar.style.transition='width 4.5s ease'; bar.style.width='90%';
 
-        animMkrAlongRoute(simDriverMkr, route2, 4500, null, ()=>{
-          badge.innerHTML='<i class="fa-solid fa-check" style="color:#f28c68"></i><span style="font-weight:700;color:#f28c68">Tiba!</span>';
-          bar.style.transition='width .5s ease'; bar.style.width='100%';
-          simMap.flyTo(dp,16,{duration:1});
-
-          setTimeout(()=>{
-            overlay.style.opacity='1'; // FIXED: using correct 'overlay' var
-            overlay.style.pointerEvents='auto';
-            setTimeout(()=>{
-              addToHistory(currentMainType);
-              navTo('history-screen');
-              // reset badge
-              badge.innerHTML='<div class="ld"></div><span>Mencari Driver...</span>';
-            },2500);
-          },800);
+        animMkrAlongRoute(simDriverMkr, route2, dur2, (t)=>{
+          // Periodic chat messages during ride
+          if(t>0.3 && t<0.35) autoDriverChat('Kita sedang melewati Jl. Malioboro kak, pemandangannya indah ya 😄');
+          if(t>0.65 && t<0.70) autoDriverChat('Hampir sampai kak, sekitar 1-2 menit lagi 👍');
+        }, ()=>{
+          if(simSkipRequested) return;
+          clearInterval(simProgressInterval);
+          stopEtaCountdown();
+          const bar=document.getElementById('sim-progress-bar');
+          if(bar){bar.style.transition='width .5s';bar.style.width='100%';}
+          autoDriverChat('Kita sudah sampai tujuan kak! Terima kasih sudah menggunakan LINTAS 🙏😊');
+          completeSimulation();
         });
       });
     },1000);
   },80);
 }
 
+// Auto-inject driver message to chat (non-disruptive)
+let autoMsgSent={};
+function autoDriverChat(msg){
+  const key=msg.slice(0,20);
+  if(autoMsgSent[key]) return;
+  autoMsgSent[key]=true;
+  const c=document.getElementById('chat-messages');
+  if(!c) return;
+  // show typing indicator briefly
+  const typingId='typing_'+Date.now();
+  c.innerHTML+=`<div id="${typingId}" style="display:flex;justify-content:flex-start"><div class="bd"><span class="typing-dots"><span></span><span></span><span></span></span></div></div>`;
+  c.scrollTop=c.scrollHeight;
+  setTimeout(()=>{
+    const el=document.getElementById(typingId);
+    if(el) el.remove();
+    c.innerHTML+=`<div style="display:flex;justify-content:flex-start"><div class="bd">${msg}</div></div>`;
+    c.scrollTop=c.scrollHeight;
+  },1200);
+}
+
 function cancelSimulation(){
   if(animRafId) cancelAnimationFrame(animRafId);
+  simSkipRequested=true;
+  clearInterval(simProgressInterval);
+  stopEtaCountdown();
+  autoMsgSent={};
   navTo('home-screen');
 }
 
-// ═══ HISTORY (FIXED: was missing in v2) ═══
+// ═══ HISTORY ═══
 function addToHistory(tipeKendaraan){
   const list=document.getElementById('history-list');
   const now=new Date();
   const time=`${now.getHours().toString().padStart(2,'0')}.${now.getMinutes().toString().padStart(2,'0')} WIB`;
   const orderId=Math.floor(10000000+Math.random()*90000000);
   const destName=selectedDest?selectedDest.name:'Tujuan Dipilih';
+  autoMsgSent={};
 
   const item=`
   <div style="display:flex;background:#fff;border-radius:15px;overflow:hidden;border:1.5px solid #bbf7d0;animation:slideIn .4s ease">
@@ -1039,16 +1240,45 @@ function addToHistory(tipeKendaraan){
 }
 
 // ═══ CHAT ═══
-function openChat(){ navTo('chat-screen'); }
+function openChat(){navTo('chat-screen');}
 function sendChatMsg(){
   const input=document.getElementById('chat-input');
-  const val=input.value.trim(); if(!val)return;
-  addChatMsg(val,'bu','flex-end'); input.value='';
-  setTimeout(()=>addChatMsg('Baik kak, mohon ditunggu sebentar 🙏','bd','flex-start'),1500);
+  const val=input.value.trim();if(!val)return;
+  addChatMsg(val,'bu','flex-end');
+  input.value='';
+  showDriverTyping(val);
 }
 function sendQuickReply(msg){
   addChatMsg(msg,'bu','flex-end');
-  setTimeout(()=>addChatMsg('Siap kak! 👍','bd','flex-start'),900);
+  showDriverTyping(msg);
+}
+function showDriverTyping(userMsg){
+  const c=document.getElementById('chat-messages');
+  const typingId='typing_'+Date.now();
+  c.innerHTML+=`<div id="${typingId}" style="display:flex;justify-content:flex-start"><div class="bd"><span class="typing-dots"><span></span><span></span><span></span></span></div></div>`;
+  c.scrollTop=c.scrollHeight;
+  const delay=800+Math.random()*800;
+  setTimeout(()=>{
+    const el=document.getElementById(typingId);
+    if(el) el.remove();
+    const reply=getDriverResponse(userMsg);
+    addChatMsg(reply,'bd','flex-start');
+    // sometimes driver sends a follow-up
+    if(Math.random()<0.35){
+      const followId='typing_'+Date.now();
+      setTimeout(()=>{
+        const c2=document.getElementById('chat-messages');
+        c2.innerHTML+=`<div id="${followId}" style="display:flex;justify-content:flex-start"><div class="bd"><span class="typing-dots"><span></span><span></span><span></span></span></div></div>`;
+        c2.scrollTop=c2.scrollHeight;
+        setTimeout(()=>{
+          const el2=document.getElementById(followId);
+          if(el2) el2.remove();
+          const followUps=['Ada yang bisa saya bantu lagi kak? 😊','Perjalanan aman ya kak 🙏','Jangan lupa rating saya setelah sampai ya kak ⭐'];
+          addChatMsg(followUps[Math.floor(Math.random()*followUps.length)],'bd','flex-start');
+        },1500);
+      },1800);
+    }
+  },delay);
 }
 function addChatMsg(msg,cls,align){
   const c=document.getElementById('chat-messages');
@@ -1057,8 +1287,8 @@ function addChatMsg(msg,cls,align){
 }
 
 // ═══ BANNER ═══
-function openBannerModal(){ document.getElementById('banner-modal').classList.add('show'); }
-function closeBannerModal(){ document.getElementById('banner-modal').classList.remove('show'); }
+function openBannerModal(){document.getElementById('banner-modal').classList.add('show');}
+function closeBannerModal(){document.getElementById('banner-modal').classList.remove('show');}
 function useDefaultBanner(){
   document.getElementById('banner-default').style.display='flex';
   document.getElementById('banner-img').style.display='none';
@@ -1077,7 +1307,7 @@ function handleBannerUpload(input){
   }
 }
 
-window.onload=()=>{ navTo('home-screen'); };
+window.onload=()=>{navTo('home-screen');};
 </script>
 <style>
 @keyframes slideIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}

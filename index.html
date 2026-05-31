@@ -47,22 +47,22 @@ body{font-family:'Plus Jakarta Sans',sans-serif;background:#e0e0e0;margin:0;padd
 .di:last-child{border-bottom:none}
 input{outline:none}
 .route-info{background:#fff7f2;border:1.5px solid #f2a681;border-radius:12px;padding:9px 13px;display:flex;align-items:center;gap:8px;font-size:11px;font-weight:600;color:#7a3200}
-/* Skip button */
+
 .skip-btn{position:absolute;bottom:47%;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;border:none;border-radius:50px;padding:9px 24px;font-size:12px;font-weight:700;cursor:pointer;z-index:1050;font-family:inherit;box-shadow:0 4px 16px rgba(0,0,0,.28);display:flex;align-items:center;gap:7px;transition:opacity .2s}
 .skip-btn:active{opacity:.7}
-/* Driver typing indicator */
+
 .typing-dots span{display:inline-block;width:6px;height:6px;background:#aaa;border-radius:50%;animation:bounce 1.2s infinite;margin:0 2px}
 .typing-dots span:nth-child(2){animation-delay:.2s}
 .typing-dots span:nth-child(3){animation-delay:.4s}
 @keyframes bounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px)}}
-/* Pulse ring for user marker on map */
+
 .pulse-ring{animation:pulse-ring 1.8s ease-out infinite}
 </style>
 </head>
 <body>
 <div class="app" id="APP">
 
-<!-- DEST OVERLAY -->
+
 <div id="dest-overlay" class="ns">
   <div style="padding:48px 20px 14px;border-bottom:1px solid #f0f0f0;flex-shrink:0">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
@@ -85,7 +85,7 @@ input{outline:none}
   <div id="dest-results" style="flex:1;overflow-y:auto;padding:6px 0"></div>
 </div>
 
-<!-- BANNER MODAL -->
+
 <div id="banner-modal">
   <div style="background:#fff;border-radius:24px 24px 0 0;padding:22px 20px 36px;width:100%;animation:slideUp .3s ease">
     <div style="width:40px;height:4px;background:#e0e0e0;border-radius:4px;margin:0 auto 18px"></div>
@@ -104,7 +104,7 @@ input{outline:none}
   </div>
 </div>
 
-<!-- SCREEN 1: HOME -->
+
 <div id="home-screen" class="screen active ns">
   <div style="background:linear-gradient(180deg,#f8ab81 0%,#fde8d4 55%,#fff 100%);padding:40px 16px 16px">
     <div style="background:rgba(255,255,255,.88);backdrop-filter:blur(10px);border-radius:20px;padding:20px;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.6)">
@@ -194,7 +194,7 @@ input{outline:none}
   </div>
 </div>
 
-<!-- SCREEN 2: MAP -->
+
 <div id="map-screen" class="screen ns">
   <div style="padding:48px 18px 10px;background:#fff;z-index:600;box-shadow:0 2px 12px rgba(0,0,0,.05);display:flex;align-items:center;gap:12px;flex-shrink:0;position:relative">
     <i class="fa-solid fa-arrow-left" style="font-size:20px;cursor:pointer" onclick="navTo('home-screen')"></i>
@@ -240,7 +240,7 @@ input{outline:none}
   </div>
 </div>
 
-<!-- SCREEN 3: ORDER DETAIL -->
+
 <div id="detail-screen" class="screen ns" style="padding:0 0 80px">
   <div style="padding:48px 18px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #f5f5f5">
     <div style="display:flex;align-items:center;gap:12px">
@@ -340,7 +340,7 @@ input{outline:none}
   </div>
 </div>
 
-<!-- SCREEN 4: SIM -->
+
 <div id="sim-screen" class="screen ns" style="position:relative">
   <div style="position:absolute;top:48px;left:18px;width:38px;height:38px;background:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,.12);cursor:pointer;z-index:1000" onclick="cancelSimulation()">
     <i class="fa-solid fa-xmark" style="font-size:16px"></i>
@@ -348,12 +348,12 @@ input{outline:none}
   <div id="sim-status-badge" style="position:absolute;top:48px;right:18px;background:#fff;padding:8px 13px;border-radius:50px;box-shadow:0 2px 12px rgba(0,0,0,.1);border:1.5px solid #f28c68;color:#f28c68;font-size:11px;font-weight:700;display:flex;align-items:center;gap:7px;z-index:1000">
     <div class="ld"></div><span>Mencari Driver...</span>
   </div>
-  <!-- SKIP BUTTON -->
+ 
   <button id="sim-skip-btn" class="skip-btn" onclick="skipSimulation()" style="display:none">
     <i class="fa-solid fa-forward-fast" style="font-size:11px"></i> Skip Perjalanan
   </button>
   <div id="sim-leaflet-map"></div>
-  <!-- ETA TICKER -->
+
   <div id="sim-eta-ticker" style="position:absolute;bottom:45%;right:14px;background:#fff;padding:7px 13px;border-radius:50px;box-shadow:0 2px 12px rgba(0,0,0,.1);font-size:11px;font-weight:700;color:#1a1a1a;z-index:1000;display:none">
     <i class="fa-regular fa-clock" style="color:#f28c68;margin-right:5px"></i><span id="eta-countdown">--:--</span>
   </div>
@@ -379,7 +379,7 @@ input{outline:none}
       </div>
     </div>
   </div>
-  <!-- SUCCESS OVERLAY -->
+
   <div id="sim-success-overlay" style="position:absolute;inset:0;background:rgba(0,0,0,.65);display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;opacity:0;pointer-events:none;transition:opacity .5s;z-index:1100">
     <div style="width:74px;height:74px;background:#22c55e;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:14px"><i class="fa-solid fa-check" style="font-size:30px"></i></div>
     <h2 style="font-size:22px;font-weight:800;margin:0 0 5px">Pesanan Selesai!</h2>
@@ -389,7 +389,7 @@ input{outline:none}
   </div>
 </div>
 
-<!-- SCREEN 5: CHAT -->
+
 <div id="chat-screen" class="screen ns">
   <div style="padding:48px 18px 13px;background:#fff;border-bottom:1px solid #f0f0f0;flex-shrink:0;display:flex;align-items:center;gap:11px">
     <button onclick="navTo('sim-screen')" style="width:34px;height:34px;border-radius:50%;background:#f5f5f5;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0"><i class="fa-solid fa-arrow-left" style="font-size:13px"></i></button>
@@ -422,7 +422,7 @@ input{outline:none}
   </div>
 </div>
 
-<!-- SCREEN 6: HISTORY -->
+
 <div id="history-screen" class="screen ns" style="background:#f7f7f7;padding:0 0 80px">
   <div style="padding:48px 18px 16px;background:#fff;border-bottom:1px solid #f0f0f0">
     <div style="display:flex;align-items:center;gap:11px;margin-bottom:14px">
@@ -478,7 +478,7 @@ input{outline:none}
   </div>
 </div>
 
-<!-- SCREEN 7: PROMO -->
+
 <div id="promo-screen" class="screen ns" style="background:#111;color:#fff">
   <div style="position:relative;height:50%;overflow:hidden;flex-shrink:0">
     <div style="width:100%;height:100%;background:linear-gradient(155deg,#2a1206,#111);display:flex;align-items:center;justify-content:center">
@@ -504,7 +504,7 @@ input{outline:none}
   </div>
 </div>
 
-<!-- SCREEN 8: PROFILE -->
+
 <div id="profile-screen" class="screen ns" style="background:#f7f7f7;padding:0 0 80px">
   <div style="padding:48px 18px 18px;background:#fff;border-bottom:1px solid #f0f0f0">
     <h2 style="font-size:20px;font-weight:800;margin:0 0 18px">Profil Saya</h2>
@@ -533,7 +533,7 @@ input{outline:none}
   </div>
 </div>
 
-<!-- SCREEN 9: EXPLORE -->
+
 <div id="explore-screen" class="screen ns" style="background:#f7f7f7">
   <div style="background:linear-gradient(180deg,#f8ab81,#fde8d4 55%,#f7f7f7);padding:48px 18px 18px">
     <h1 style="font-size:20px;font-weight:800;margin:0 0 3px">Jelajahi</h1>
@@ -571,7 +571,7 @@ input{outline:none}
   </div>
 </div>
 
-<!-- SCREEN 10: CART -->
+
 <div id="cart-screen" class="screen ns" style="background:#f7f7f7">
   <div style="background:linear-gradient(180deg,#f8ab81,#fde8d4 55%,#f7f7f7);padding:48px 18px 18px">
     <h1 style="font-size:20px;font-weight:800;margin:0 0 3px">Pesanan Aktif</h1>
@@ -607,7 +607,7 @@ input{outline:none}
   </div>
 </div>
 
-<!-- BOTTOM NAV -->
+
 <div style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #f0f0f0;display:flex;justify-content:space-around;align-items:center;padding:11px 6px;z-index:50">
   <button id="nav-home" onclick="navTo('home-screen')" style="display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:transparent;cursor:pointer;font-family:inherit;color:#f28c68"><i class="fa-solid fa-house" style="font-size:19px"></i><span style="font-size:8px;font-weight:700">Beranda</span></button>
   <button id="nav-explore" onclick="navTo('explore-screen')" style="display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:transparent;cursor:pointer;font-family:inherit;color:#ccc"><i class="fa-regular fa-compass" style="font-size:19px"></i><span style="font-size:8px;font-weight:700">Jelajahi</span></button>
@@ -618,7 +618,7 @@ input{outline:none}
 </div>
 
 <script>
-// ═══ STATE ═══
+
 let activeVehicle='Becak', currentMainType='Becak Kayuh', selectedDest=null;
 let mapScreenMap=null, mapDriverLayer=null, mapRouteLine=null;
 let simMap=null, simDriverMkr=null, simUserMkr=null, simDestMkr=null;
@@ -649,7 +649,7 @@ const DESTINATIONS=[
   {name:'Bandara Adisucipto',addr:'Jl. Solo, Maguwoharjo, Sleman',dist:'8.2 km',icon:'fa-plane',lat:-7.7881,lng:110.4317},
 ];
 
-// ═══ VEHICLE DATA — Becak Kayuh (mahal) & Becak Listrik (murah) ═══
+
 const VEHICLE_DATA={
   Becak:{
     title:'Becak',
@@ -675,7 +675,7 @@ const VEHICLE_DATA={
   }
 };
 
-// ═══ CHAT RESPONSES — lebih banyak variasi ═══
+
 const DRIVER_RESPONSES_GENERIC=[
   'Siap kak! 👍',
   'Baik kak, saya segera menuju lokasi 🙏',
@@ -727,7 +727,7 @@ function getDriverResponse(msg) {
   return DRIVER_RESPONSES_GENERIC[Math.floor(Math.random()*DRIVER_RESPONSES_GENERIC.length)];
 }
 
-// ═══ OSRM ROUTING ═══
+
 async function fetchOSRMRoute(from, to) {
   const url=`https://router.project-osrm.org/route/v1/driving/${from[1]},${from[0]};${to[1]},${to[0]}?overview=full&geometries=geojson`;
   try {
@@ -744,7 +744,7 @@ async function fetchOSRMRoute(from, to) {
   return null;
 }
 
-// ═══ NAV ═══
+
 function navTo(id){
   document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -757,7 +757,7 @@ function navTo(id){
   if(id==='detail-screen'){detailMiniMap=null;setTimeout(initDetailMiniMap,80);}
 }
 
-// ═══ DEST SEARCH ═══
+
 function openDestSearch(){
   document.getElementById('dest-overlay').classList.add('show');
   setTimeout(()=>{
@@ -839,7 +839,7 @@ function drawMapRoute(pts){
   mapScreenMap.fitBounds([COORDS.userPickup,dp],{padding:[60,50]});
 }
 
-// ═══ LEAFLET HELPERS ═══
+
 function mkDriverIcon(v){
   const ic=v==='Becak'?'fa-bicycle':'fa-horse';
   return L.divIcon({className:'',html:`<div style="width:33px;height:33px;background:#f28c68;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2.5px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.28)"><i class="fa-solid ${ic}" style="color:#fff;font-size:13px"></i></div>`,iconSize:[33,33],iconAnchor:[16,16]});
@@ -851,7 +851,6 @@ function mkDestIcon(){
   return L.divIcon({className:'',html:`<div style="width:33px;height:33px;background:#ef4444;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2.5px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.35)"><i class="fa-solid fa-flag" style="color:#fff;font-size:12px"></i></div>`,iconSize:[33,33],iconAnchor:[16,16]});
 }
 
-// ═══ MAP SCREEN ═══
 function goToMap(type){updateMapVehicle(type);navTo('map-screen');setTimeout(()=>initMapScreenLeaflet(false),80);}
 
 function initMapScreenLeaflet(reDraw){
@@ -885,7 +884,7 @@ function refreshDriverMkrs(){
   });
 }
 
-// ═══ UPDATE VEHICLE ═══
+
 function updateMapVehicle(type){
   activeVehicle=type;
   const data=VEHICLE_DATA[type];
@@ -933,7 +932,7 @@ function updateTxDetail(idx){
 
 function goToDetail(){navTo('detail-screen');}
 
-// ═══ MINI MAP ═══
+
 async function initDetailMiniMap(){
   const el=document.getElementById('detail-mini-map');
   if(!el) return;
@@ -974,7 +973,7 @@ function initExploreMap(){
   exploreMap.invalidateSize();
 }
 
-// ═══ ETA COUNTDOWN ═══
+
 function startEtaCountdown(durationMs) {
   clearInterval(etaIntervalId);
   const ticker=document.getElementById('sim-eta-ticker');
@@ -998,7 +997,7 @@ function stopEtaCountdown(){
   if(ticker) ticker.style.display='none';
 }
 
-// ═══ PROGRESS BAR (smooth real-time) ═══
+
 function startProgressBar(fromPct,toPct,durationMs,id){
   clearInterval(simProgressInterval);
   const bar=document.getElementById('sim-progress-bar');
@@ -1014,7 +1013,6 @@ function startProgressBar(fromPct,toPct,durationMs,id){
   },200);
 }
 
-// ═══ ANIMATION ALONG ROUTE ═══
 function animMkrAlongRoute(mkr, routePts, durationMs, onProgress, onDone){
   if(animRafId) cancelAnimationFrame(animRafId);
   if(!routePts||routePts.length<2){if(onDone)onDone();return;}
@@ -1042,7 +1040,7 @@ function animMkrAlongRoute(mkr, routePts, durationMs, onProgress, onDone){
   animRafId=requestAnimationFrame(step);
 }
 
-// ═══ SKIP SIMULATION ═══
+
 function skipSimulation(){
   simSkipRequested=true;
   clearInterval(simProgressInterval);
@@ -1076,7 +1074,7 @@ function completeSimulation(){
   },600);
 }
 
-// ═══ SIMULATION WITH REAL ROUTE & REAL TIME ═══
+
 function startSimulation(){
   navTo('sim-screen');
   simSkipRequested=false;
@@ -1124,14 +1122,14 @@ function startSimulation(){
     const route1=r1?r1.pts:[COORDS.driverStart,COORDS.userPickup];
     const route2=r2?r2.pts:[COORDS.userPickup,dp];
 
-    // Real-time durations (ms). Minimum 8s each for visual clarity.
+
     const dur1=r1?Math.max(r1.durMin*60000, 8000):10000;
     const dur2=r2?Math.max(r2.durMin*60000, 8000):15000;
 
-    // Draw destination route guide
+   
     L.polyline(route2,{color:'#f28c68',weight:3,dashArray:'7 4',opacity:.55}).addTo(simMap);
 
-    // Driver → pickup route line
+   
     const phaseLine1=L.polyline(route1,{color:'#3b82f6',weight:3,opacity:.4}).addTo(simMap);
 
     setTimeout(()=>{
@@ -1161,13 +1159,13 @@ function startSimulation(){
         startEtaCountdown(dur2);
         simPhase=2;
 
-        // Auto-chat: driver arrived at pickup
+    
         autoDriverChat('Saya sudah di lokasi penjemputan kak, silakan naik! 🙏');
 
         simMap.flyTo(dp,14,{duration:1.5});
 
         animMkrAlongRoute(simDriverMkr, route2, dur2, (t)=>{
-          // Periodic chat messages during ride
+          
           if(t>0.3 && t<0.35) autoDriverChat('Kita sedang melewati Jl. Malioboro kak, pemandangannya indah ya 😄');
           if(t>0.65 && t<0.70) autoDriverChat('Hampir sampai kak, sekitar 1-2 menit lagi 👍');
         }, ()=>{
@@ -1184,7 +1182,7 @@ function startSimulation(){
   },80);
 }
 
-// Auto-inject driver message to chat (non-disruptive)
+
 let autoMsgSent={};
 function autoDriverChat(msg){
   const key=msg.slice(0,20);
@@ -1192,7 +1190,7 @@ function autoDriverChat(msg){
   autoMsgSent[key]=true;
   const c=document.getElementById('chat-messages');
   if(!c) return;
-  // show typing indicator briefly
+
   const typingId='typing_'+Date.now();
   c.innerHTML+=`<div id="${typingId}" style="display:flex;justify-content:flex-start"><div class="bd"><span class="typing-dots"><span></span><span></span><span></span></span></div></div>`;
   c.scrollTop=c.scrollHeight;
@@ -1213,7 +1211,7 @@ function cancelSimulation(){
   navTo('home-screen');
 }
 
-// ═══ HISTORY ═══
+
 function addToHistory(tipeKendaraan){
   const list=document.getElementById('history-list');
   const now=new Date();
@@ -1239,7 +1237,7 @@ function addToHistory(tipeKendaraan){
   list.insertAdjacentHTML('afterbegin',item);
 }
 
-// ═══ CHAT ═══
+
 function openChat(){navTo('chat-screen');}
 function sendChatMsg(){
   const input=document.getElementById('chat-input');
@@ -1263,7 +1261,7 @@ function showDriverTyping(userMsg){
     if(el) el.remove();
     const reply=getDriverResponse(userMsg);
     addChatMsg(reply,'bd','flex-start');
-    // sometimes driver sends a follow-up
+ 
     if(Math.random()<0.35){
       const followId='typing_'+Date.now();
       setTimeout(()=>{
@@ -1286,7 +1284,7 @@ function addChatMsg(msg,cls,align){
   c.scrollTop=c.scrollHeight;
 }
 
-// ═══ BANNER ═══
+
 function openBannerModal(){document.getElementById('banner-modal').classList.add('show');}
 function closeBannerModal(){document.getElementById('banner-modal').classList.remove('show');}
 function useDefaultBanner(){
